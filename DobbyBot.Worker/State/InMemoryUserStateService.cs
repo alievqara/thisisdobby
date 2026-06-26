@@ -27,8 +27,24 @@ public sealed class InMemoryUserStateService : IUserStateService
         state.UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    public void SetMenuMessageId(long telegramUserId, long messageId)
+    {
+        var state = Get(telegramUserId);
+
+        state.MenuMessageId = messageId;
+        state.UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     public void Clear(long telegramUserId)
     {
-        _states.TryRemove(telegramUserId, out _);
+        var state = Get(telegramUserId);
+
+        state.Mode = BotUserMode.None;
+        state.PendingDownloaderInput = null;
+        state.UpdatedAtUtc = DateTime.UtcNow;
+
+        // Vacib:
+        // MenuMessageId-ni silmirik.
+        // Çünki /start gələndə köhnə menu mesajını edit etmək istəyirik.
     }
 }

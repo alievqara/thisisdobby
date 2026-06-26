@@ -1,0 +1,463 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\bot\\dobbybotworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\bot\\dobbybotworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\bot\\telegramgateway.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\bot\\telegramgateway.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\state\\inmemoryuserstateservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\state\\inmemoryuserstateservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\state\\iuserstateservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\state\\iuserstateservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\state\\botuserstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\state\\botuserstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\commands\\commandrouter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\commands\\commandrouter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\menus\\dobbymenus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\menus\\dobbymenus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\state\\botusermode.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\state\\botusermode.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\modules\\downloader\\downloaderinputparser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\modules\\downloader\\downloaderinputparser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\modules\\downloader\\idownloaderinputparser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\modules\\downloader\\idownloaderinputparser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\modules\\downloader\\downloaderrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\modules\\downloader\\downloaderrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\modules\\downloader\\downloadercontenttype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\modules\\downloader\\downloadercontenttype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\modules\\downloader\\downloadersource.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\modules\\downloader\\downloadersource.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\options\\dobbybotoptions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\options\\dobbybotoptions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\execution\\icommandexecutor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\execution\\icommandexecutor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\execution\\commandresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\execution\\commandresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\execution\\commandexecutor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\execution\\commandexecutor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\commands\\botresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\commands\\botresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\bot\\telegrammodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\bot\\telegrammodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\services\\servicecontrolservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\services\\servicecontrolservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\services\\iservicecontrolservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\services\\iservicecontrolservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\services\\serverstatusservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\services\\serverstatusservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\services\\iserverstatusservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\services\\iserverstatusservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\security\\adminguard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\security\\adminguard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|c:\\users\\aliev\\onedrive\\desktop\\dobbybot\\dobbybot.worker\\security\\iadminguard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E99AAED0-BB4A-9B57-3820-3C2C4D85BAE4}|DobbyBot.Worker\\DobbyBot.Worker.csproj|solutionrelative:dobbybot.worker\\security\\iadminguard.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 9,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:4:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "InMemoryUserStateService.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\InMemoryUserStateService.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\State\\InMemoryUserStateService.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\InMemoryUserStateService.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\State\\InMemoryUserStateService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:12:56.234Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "IUserStateService.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\IUserStateService.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\State\\IUserStateService.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\IUserStateService.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\State\\IUserStateService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:12:35.506Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "BotUserState.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\BotUserState.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\State\\BotUserState.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\BotUserState.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\State\\BotUserState.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:11:46.699Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Program.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Program.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Program.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAABNAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:35:56.406Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "DobbyMenus.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Menus\\DobbyMenus.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Menus\\DobbyMenus.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Menus\\DobbyMenus.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Menus\\DobbyMenus.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAADwvz4AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T20:10:00.675Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "CommandRouter.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Commands\\CommandRouter.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Commands\\CommandRouter.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Commands\\CommandRouter.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Commands\\CommandRouter.cs",
+              "ViewState": "AgIAAA0BAAAAAAAAAAAYwDEBAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T20:10:46.672Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "DobbyBotWorker.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Bot\\DobbyBotWorker.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Bot\\DobbyBotWorker.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Bot\\DobbyBotWorker.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Bot\\DobbyBotWorker.cs",
+              "ViewState": "AgIAAAABAAAAAAAAAADwvw4BAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:43:46.801Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TelegramGateway.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Bot\\TelegramGateway.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Bot\\TelegramGateway.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Bot\\TelegramGateway.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Bot\\TelegramGateway.cs",
+              "ViewState": "AgIAAJMAAAAAAAAAAAAUwKUAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:39:56.146Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "DownloaderInputParser.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderInputParser.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderInputParser.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderInputParser.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderInputParser.cs",
+              "ViewState": "AgIAAJYAAAAAAAAAAADwv7wAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:10:36.157Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "BotUserMode.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\BotUserMode.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\State\\BotUserMode.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\State\\BotUserMode.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\State\\BotUserMode.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:11:29.356Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "IDownloaderInputParser.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\IDownloaderInputParser.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Modules\\Downloader\\IDownloaderInputParser.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\IDownloaderInputParser.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Modules\\Downloader\\IDownloaderInputParser.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:10:22.054Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "DownloaderRequest.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderRequest.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderRequest.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderRequest.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderRequest.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:10:05.872Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "DownloaderContentType.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderContentType.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderContentType.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderContentType.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderContentType.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:09:36.239Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "DownloaderSource.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderSource.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderSource.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Modules\\Downloader\\DownloaderSource.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Modules\\Downloader\\DownloaderSource.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-21T06:09:08.782Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "BotResponse.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Commands\\BotResponse.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Commands\\BotResponse.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Commands\\BotResponse.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Commands\\BotResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T20:08:22.592Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "CommandExecutor.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Execution\\CommandExecutor.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Execution\\CommandExecutor.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Execution\\CommandExecutor.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Execution\\CommandExecutor.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAEgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:41:31.693Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "CommandResult.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Execution\\CommandResult.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Execution\\CommandResult.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Execution\\CommandResult.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Execution\\CommandResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:40:55.186Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "ICommandExecutor.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Execution\\ICommandExecutor.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Execution\\ICommandExecutor.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Execution\\ICommandExecutor.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Execution\\ICommandExecutor.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:41:17.474Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "DobbyBotOptions.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Options\\DobbyBotOptions.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Options\\DobbyBotOptions.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Options\\DobbyBotOptions.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Options\\DobbyBotOptions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:38:51.354Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "TelegramModels.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Bot\\TelegramModels.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Bot\\TelegramModels.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Bot\\TelegramModels.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Bot\\TelegramModels.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAQwFYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:39:32.467Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "ServerStatusService.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\ServerStatusService.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Services\\ServerStatusService.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\ServerStatusService.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Services\\ServerStatusService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:42:13.654Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "IServerStatusService.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\IServerStatusService.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Services\\IServerStatusService.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\IServerStatusService.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Services\\IServerStatusService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:41:52.431Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "IServiceControlService.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\IServiceControlService.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Services\\IServiceControlService.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\IServiceControlService.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Services\\IServiceControlService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:42:35.065Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "ServiceControlService.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\ServiceControlService.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Services\\ServiceControlService.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Services\\ServiceControlService.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Services\\ServiceControlService.cs",
+              "ViewState": "AgIAAEAAAAAAAAAAAAAQwGUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:43:11.033Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "AdminGuard.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Security\\AdminGuard.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Security\\AdminGuard.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Security\\AdminGuard.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Security\\AdminGuard.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:40:40.011Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "IAdminGuard.cs",
+              "DocumentMoniker": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Security\\IAdminGuard.cs",
+              "RelativeDocumentMoniker": "DobbyBot.Worker\\Security\\IAdminGuard.cs",
+              "ToolTip": "C:\\Users\\aliev\\OneDrive\\Desktop\\DobbyBot\\DobbyBot.Worker\\Security\\IAdminGuard.cs",
+              "RelativeToolTip": "DobbyBot.Worker\\Security\\IAdminGuard.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T19:40:20.8Z"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 156,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

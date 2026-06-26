@@ -1,7 +1,10 @@
 ﻿using DobbyBot.Worker.Commands;
+using DobbyBot.Worker.Menus;
 using DobbyBot.Worker.Options;
 using DobbyBot.Worker.Security;
+using DobbyBot.Worker.State;
 using Microsoft.Extensions.Options;
+using DobbyBot.Worker.Menus;
 
 namespace DobbyBot.Worker.Bot;
 
@@ -12,17 +15,20 @@ public sealed class DobbyBotWorker : BackgroundService
     private readonly IAdminGuard _adminGuard;
     private readonly DobbyBotOptions _options;
     private readonly ILogger<DobbyBotWorker> _logger;
+    private readonly IUserStateService _userStateService;
 
     public DobbyBotWorker(
         TelegramGateway telegramGateway,
         CommandRouter commandRouter,
         IAdminGuard adminGuard,
+        IUserStateService userStateService,
         IOptions<DobbyBotOptions> options,
         ILogger<DobbyBotWorker> logger)
     {
         _telegramGateway = telegramGateway;
         _commandRouter = commandRouter;
         _adminGuard = adminGuard;
+        _userStateService = userStateService;
         _options = options.Value;
         _logger = logger;
     }
@@ -81,7 +87,7 @@ public sealed class DobbyBotWorker : BackgroundService
         TelegramMessage message,
         CancellationToken cancellationToken)
     {
-        if (message.Text is null || message.From is null)
+        if (message.From is null)
         {
             return;
         }
@@ -96,10 +102,19 @@ public sealed class DobbyBotWorker : BackgroundService
 
             await _telegramGateway.SendMessageAsync(
                 message.Chat.Id,
-                UnauthorizedAccessMessage(),
+                "Private bot. Access denied.",
                 null,
                 cancellationToken);
 
+            await TryDeleteUserMessageAsync(
+                message,
+                cancellationToken);
+
+            return;
+        }
+
+        if (message.Text is null)
+        {
             return;
         }
 
@@ -108,16 +123,20 @@ public sealed class DobbyBotWorker : BackgroundService
             message.Text,
             cancellationToken);
 
-        await _telegramGateway.SendMessageAsync(
+        await SendBotResponseAsync(
+            message.From.Id,
             message.Chat.Id,
-            response.Text,
-            response.ReplyMarkup,
+            response,
+            cancellationToken);
+
+        await TryDeleteUserMessageAsync(
+            message,
             cancellationToken);
     }
 
     private async Task HandleCallbackQueryAsync(
-        TelegramCallbackQuery callbackQuery,
-        CancellationToken cancellationToken)
+    TelegramCallbackQuery callbackQuery,
+    CancellationToken cancellationToken)
     {
         if (!_adminGuard.IsAdmin(callbackQuery.From.Id))
         {
@@ -127,20 +146,19 @@ public sealed class DobbyBotWorker : BackgroundService
                 callbackQuery.From.Username,
                 callbackQuery.Data);
 
-            if (callbackQuery.Message is not null)
-            {
-                await _telegramGateway.SendMessageAsync(
-                    callbackQuery.Message.Chat.Id,
-                    UnauthorizedAccessMessage(),
-                    null,
-                    cancellationToken);
-            }
+            await _telegramGateway.AnswerCallbackQueryAsync(
+                callbackQuery.Id,
+                cancellationToken);
 
             return;
         }
 
         if (callbackQuery.Message is null || callbackQuery.Data is null)
         {
+            await _telegramGateway.AnswerCallbackQueryAsync(
+                callbackQuery.Id,
+                cancellationToken);
+
             return;
         }
 
@@ -148,17 +166,128 @@ public sealed class DobbyBotWorker : BackgroundService
             callbackQuery.Id,
             cancellationToken);
 
-        var response = await _commandRouter.HandleCallbackAsync(
-            callbackQuery.From.Id,
-            callbackQuery.Data,
-            cancellationToken);
+        BotResponse response;
 
-        await _telegramGateway.EditMessageTextAsync(
+        try
+        {
+            response = await _commandRouter.HandleCallbackAsync(
+                callbackQuery.From.Id,
+                callbackQuery.Data,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to handle callback. Data: {Data}",
+                callbackQuery.Data);
+
+            response = new BotResponse(
+                "❌ Əməliyyat zamanı xəta baş verdi. Əsas menyuya qayıt.",
+                DobbyMenus.MainMenu());
+        }
+
+        var edited = await _telegramGateway.EditMessageTextAsync(
             callbackQuery.Message.Chat.Id,
             callbackQuery.Message.MessageId,
             response.Text,
             response.ReplyMarkup,
             cancellationToken);
+
+        if (edited)
+        {
+            _userStateService.SetMenuMessageId(
+                callbackQuery.From.Id,
+                callbackQuery.Message.MessageId);
+
+            return;
+        }
+
+        var sentMessage = await _telegramGateway.SendMessageAsync(
+            callbackQuery.Message.Chat.Id,
+            response.Text,
+            response.ReplyMarkup,
+            cancellationToken);
+
+        if (sentMessage is not null)
+        {
+            _userStateService.SetMenuMessageId(
+                callbackQuery.From.Id,
+                sentMessage.MessageId);
+        }
+    }
+
+    private async Task SendBotResponseAsync(
+    long telegramUserId,
+    long chatId,
+    BotResponse response,
+    CancellationToken cancellationToken)
+    {
+        if (response.ReplyMarkup is null)
+        {
+            await _telegramGateway.SendMessageAsync(
+                chatId,
+                response.Text,
+                null,
+                cancellationToken);
+
+            return;
+        }
+
+        var state = _userStateService.Get(telegramUserId);
+
+        if (state.MenuMessageId is not null)
+        {
+            var edited = await _telegramGateway.EditMessageTextAsync(
+                chatId,
+                state.MenuMessageId.Value,
+                response.Text,
+                response.ReplyMarkup,
+                cancellationToken);
+
+            if (edited)
+            {
+                return;
+            }
+
+            await _telegramGateway.DeleteMessageAsync(
+                chatId,
+                state.MenuMessageId.Value,
+                cancellationToken);
+        }
+
+        var sentMessage = await _telegramGateway.SendMessageAsync(
+            chatId,
+            response.Text,
+            response.ReplyMarkup,
+            cancellationToken);
+
+        if (sentMessage is not null)
+        {
+            _userStateService.SetMenuMessageId(
+                telegramUserId,
+                sentMessage.MessageId);
+        }
+    }
+
+    private async Task TryDeleteUserMessageAsync(
+        TelegramMessage message,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _telegramGateway.DeleteMessageAsync(
+                message.Chat.Id,
+                message.MessageId,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(
+                ex,
+                "Failed to delete user message. MessageId: {MessageId}",
+                message.MessageId);
+        }
     }
 
     private void ValidateOptions()
@@ -172,19 +301,5 @@ public sealed class DobbyBotWorker : BackgroundService
         {
             throw new InvalidOperationException("DobbyBot admin Telegram ID is missing.");
         }
-    }
-
-
-    private static string UnauthorizedAccessMessage()
-    {
-        return """
-        Access denied.
-
-        This is a private personal bot. It is not a public service and cannot be used by unauthorized users.
-
-        For security reasons, this access attempt may be logged, including your Telegram user ID, username and message metadata.
-
-        Please do not continue interacting with this bot. Harmful, abusive or suspicious activity may be handled through appropriate legal channels.
-        """;
     }
 }

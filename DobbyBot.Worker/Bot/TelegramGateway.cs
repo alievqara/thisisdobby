@@ -34,11 +34,11 @@ public sealed class TelegramGateway
         return response?.Result ?? [];
     }
 
-    public async Task SendMessageAsync(
-        long chatId,
-        string text,
-        TelegramInlineKeyboardMarkup? replyMarkup,
-        CancellationToken cancellationToken)
+    public async Task<TelegramMessage?> SendMessageAsync(
+    long chatId,
+    string text,
+    TelegramInlineKeyboardMarkup? replyMarkup,
+    CancellationToken cancellationToken)
     {
         var url = $"https://api.telegram.org/bot{_options.Token}/sendMessage";
 
@@ -55,14 +55,49 @@ public sealed class TelegramGateway
             cancellationToken);
 
         response.EnsureSuccessStatusCode();
+
+        var result = await response.Content
+            .ReadFromJsonAsync<TelegramApiResponse<TelegramMessage>>(
+                cancellationToken);
+
+        return result?.Result;
     }
 
-    public async Task EditMessageTextAsync(
-        long chatId,
-        long messageId,
-        string text,
-        TelegramInlineKeyboardMarkup? replyMarkup,
-        CancellationToken cancellationToken)
+    public async Task<bool> DeleteMessageAsync(
+    long chatId,
+    long messageId,
+    CancellationToken cancellationToken)
+    {
+        var url = $"https://api.telegram.org/bot{_options.Token}/deleteMessage";
+
+        var payload = new
+        {
+            chat_id = chatId,
+            message_id = messageId
+        };
+
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync(
+                url,
+                payload,
+                cancellationToken);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+
+    public async Task<bool> EditMessageTextAsync(
+    long chatId,
+    long messageId,
+    string text,
+    TelegramInlineKeyboardMarkup? replyMarkup,
+    CancellationToken cancellationToken)
     {
         var url = $"https://api.telegram.org/bot{_options.Token}/editMessageText";
 
@@ -74,17 +109,39 @@ public sealed class TelegramGateway
             reply_markup = replyMarkup
         };
 
-        using var response = await _httpClient.PostAsJsonAsync(
-            url,
-            payload,
-            cancellationToken);
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync(
+                url,
+                payload,
+                cancellationToken);
 
-        response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+
+            // Telegram returns 400 if the same text/markup is sent again.
+            // This should not crash the bot.
+            if (body.Contains("message is not modified", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
-    public async Task AnswerCallbackQueryAsync(
-        string callbackQueryId,
-        CancellationToken cancellationToken)
+
+    public async Task<bool> AnswerCallbackQueryAsync(
+    string callbackQueryId,
+    CancellationToken cancellationToken)
     {
         var url = $"https://api.telegram.org/bot{_options.Token}/answerCallbackQuery";
 
@@ -93,11 +150,19 @@ public sealed class TelegramGateway
             callback_query_id = callbackQueryId
         };
 
-        using var response = await _httpClient.PostAsJsonAsync(
-            url,
-            payload,
-            cancellationToken);
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync(
+                url,
+                payload,
+                cancellationToken);
 
-        response.EnsureSuccessStatusCode();
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
+
 }
