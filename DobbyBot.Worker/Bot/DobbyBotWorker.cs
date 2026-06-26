@@ -4,7 +4,6 @@ using DobbyBot.Worker.Options;
 using DobbyBot.Worker.Security;
 using DobbyBot.Worker.State;
 using Microsoft.Extensions.Options;
-using DobbyBot.Worker.Menus;
 
 namespace DobbyBot.Worker.Bot;
 
@@ -13,9 +12,9 @@ public sealed class DobbyBotWorker : BackgroundService
     private readonly TelegramGateway _telegramGateway;
     private readonly CommandRouter _commandRouter;
     private readonly IAdminGuard _adminGuard;
+    private readonly IUserStateService _userStateService;
     private readonly DobbyBotOptions _options;
     private readonly ILogger<DobbyBotWorker> _logger;
-    private readonly IUserStateService _userStateService;
 
     public DobbyBotWorker(
         TelegramGateway telegramGateway,
@@ -51,7 +50,9 @@ public sealed class DobbyBotWorker : BackgroundService
                 {
                     offset = Math.Max(offset, update.UpdateId + 1);
 
-                    await HandleUpdateAsync(update, stoppingToken);
+                    await HandleUpdateSafelyAsync(
+                        update,
+                        stoppingToken);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -60,10 +61,37 @@ public sealed class DobbyBotWorker : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DobbyBot polling failed.");
+                _logger.LogError(
+                    ex,
+                    "DobbyBot polling loop failed.");
 
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                await Task.Delay(
+                    TimeSpan.FromSeconds(5),
+                    stoppingToken);
             }
+        }
+    }
+
+    private async Task HandleUpdateSafelyAsync(
+        TelegramUpdate update,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await HandleUpdateAsync(
+                update,
+                cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Normal shutdown.
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to handle Telegram update. UpdateId: {UpdateId}",
+                update.UpdateId);
         }
     }
 
@@ -73,13 +101,18 @@ public sealed class DobbyBotWorker : BackgroundService
     {
         if (update.Message is not null)
         {
-            await HandleMessageAsync(update.Message, cancellationToken);
+            await HandleMessageAsync(
+                update.Message,
+                cancellationToken);
+
             return;
         }
 
         if (update.CallbackQuery is not null)
         {
-            await HandleCallbackQueryAsync(update.CallbackQuery, cancellationToken);
+            await HandleCallbackQueryAsync(
+                update.CallbackQuery,
+                cancellationToken);
         }
     }
 
@@ -100,16 +133,7 @@ public sealed class DobbyBotWorker : BackgroundService
                 message.From.Username,
                 message.Text);
 
-            await _telegramGateway.SendMessageAsync(
-                message.Chat.Id,
-                "Private bot. Access denied.",
-                null,
-                cancellationToken);
-
-            await TryDeleteUserMessageAsync(
-                message,
-                cancellationToken);
-
+            // Non-admin user heç bir cavab almır.
             return;
         }
 
@@ -118,15 +142,34 @@ public sealed class DobbyBotWorker : BackgroundService
             return;
         }
 
-        var response = await _commandRouter.HandleAsync(
-            message.From.Id,
-            message.Text,
-            cancellationToken);
+        BotResponse response;
+
+        try
+        {
+            response = await _commandRouter.HandleAsync(
+                message.From.Id,
+                message.Text,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to handle text message. Text: {Text}",
+                message.Text);
+
+            response = new BotResponse(
+                "❌ Xəta baş verdi. Əsas menyuya qayıtdım.",
+                DobbyMenus.MainMenu());
+        }
+
+        var forceNewMenu = IsMenuResetCommand(message.Text);
 
         await SendBotResponseAsync(
             message.From.Id,
             message.Chat.Id,
             response,
+            forceNewMenu,
             cancellationToken);
 
         await TryDeleteUserMessageAsync(
@@ -135,8 +178,8 @@ public sealed class DobbyBotWorker : BackgroundService
     }
 
     private async Task HandleCallbackQueryAsync(
-    TelegramCallbackQuery callbackQuery,
-    CancellationToken cancellationToken)
+        TelegramCallbackQuery callbackQuery,
+        CancellationToken cancellationToken)
     {
         if (!_adminGuard.IsAdmin(callbackQuery.From.Id))
         {
@@ -183,45 +226,24 @@ public sealed class DobbyBotWorker : BackgroundService
                 callbackQuery.Data);
 
             response = new BotResponse(
-                "❌ Əməliyyat zamanı xəta baş verdi. Əsas menyuya qayıt.",
+                "❌ Əməliyyat zamanı xəta baş verdi. Əsas menyuya qayıtdım.",
                 DobbyMenus.MainMenu());
         }
 
-        var edited = await _telegramGateway.EditMessageTextAsync(
+        await SendCallbackResponseAsync(
+            callbackQuery.From.Id,
             callbackQuery.Message.Chat.Id,
             callbackQuery.Message.MessageId,
-            response.Text,
-            response.ReplyMarkup,
+            response,
             cancellationToken);
-
-        if (edited)
-        {
-            _userStateService.SetMenuMessageId(
-                callbackQuery.From.Id,
-                callbackQuery.Message.MessageId);
-
-            return;
-        }
-
-        var sentMessage = await _telegramGateway.SendMessageAsync(
-            callbackQuery.Message.Chat.Id,
-            response.Text,
-            response.ReplyMarkup,
-            cancellationToken);
-
-        if (sentMessage is not null)
-        {
-            _userStateService.SetMenuMessageId(
-                callbackQuery.From.Id,
-                sentMessage.MessageId);
-        }
     }
 
     private async Task SendBotResponseAsync(
-    long telegramUserId,
-    long chatId,
-    BotResponse response,
-    CancellationToken cancellationToken)
+        long telegramUserId,
+        long chatId,
+        BotResponse response,
+        bool forceNewMenu,
+        CancellationToken cancellationToken)
     {
         if (response.ReplyMarkup is null)
         {
@@ -235,6 +257,34 @@ public sealed class DobbyBotWorker : BackgroundService
         }
 
         var state = _userStateService.Get(telegramUserId);
+
+        if (forceNewMenu)
+        {
+            if (state.MenuMessageId is not null)
+            {
+                await _telegramGateway.DeleteMessageAsync(
+                    chatId,
+                    state.MenuMessageId.Value,
+                    cancellationToken);
+            }
+
+            _userStateService.ClearMenuMessageId(telegramUserId);
+
+            var newMenuMessage = await _telegramGateway.SendMessageAsync(
+                chatId,
+                response.Text,
+                response.ReplyMarkup,
+                cancellationToken);
+
+            if (newMenuMessage is not null)
+            {
+                _userStateService.SetMenuMessageId(
+                    telegramUserId,
+                    newMenuMessage.MessageId);
+            }
+
+            return;
+        }
 
         if (state.MenuMessageId is not null)
         {
@@ -254,7 +304,84 @@ public sealed class DobbyBotWorker : BackgroundService
                 chatId,
                 state.MenuMessageId.Value,
                 cancellationToken);
+
+            _userStateService.ClearMenuMessageId(telegramUserId);
         }
+
+        var sentMessage = await _telegramGateway.SendMessageAsync(
+            chatId,
+            response.Text,
+            response.ReplyMarkup,
+            cancellationToken);
+
+        if (sentMessage is not null)
+        {
+            _userStateService.SetMenuMessageId(
+                telegramUserId,
+                sentMessage.MessageId);
+        }
+    }
+
+    private async Task SendCallbackResponseAsync(
+        long telegramUserId,
+        long chatId,
+        long callbackMessageId,
+        BotResponse response,
+        CancellationToken cancellationToken)
+    {
+        if (response.ReplyMarkup is null)
+        {
+            await _telegramGateway.SendMessageAsync(
+                chatId,
+                response.Text,
+                null,
+                cancellationToken);
+
+            return;
+        }
+
+        var state = _userStateService.Get(telegramUserId);
+
+        if (state.MenuMessageId is not null &&
+            state.MenuMessageId.Value != callbackMessageId)
+        {
+            await _telegramGateway.DeleteMessageAsync(
+                chatId,
+                callbackMessageId,
+                cancellationToken);
+
+            await SendBotResponseAsync(
+                telegramUserId,
+                chatId,
+                response,
+                forceNewMenu: false,
+                cancellationToken);
+
+            return;
+        }
+
+        var edited = await _telegramGateway.EditMessageTextAsync(
+            chatId,
+            callbackMessageId,
+            response.Text,
+            response.ReplyMarkup,
+            cancellationToken);
+
+        if (edited)
+        {
+            _userStateService.SetMenuMessageId(
+                telegramUserId,
+                callbackMessageId);
+
+            return;
+        }
+
+        await _telegramGateway.DeleteMessageAsync(
+            chatId,
+            callbackMessageId,
+            cancellationToken);
+
+        _userStateService.ClearMenuMessageId(telegramUserId);
 
         var sentMessage = await _telegramGateway.SendMessageAsync(
             chatId,
@@ -274,20 +401,22 @@ public sealed class DobbyBotWorker : BackgroundService
         TelegramMessage message,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await _telegramGateway.DeleteMessageAsync(
-                message.Chat.Id,
-                message.MessageId,
-                cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(
-                ex,
-                "Failed to delete user message. MessageId: {MessageId}",
-                message.MessageId);
-        }
+        await _telegramGateway.DeleteMessageAsync(
+            message.Chat.Id,
+            message.MessageId,
+            cancellationToken);
+    }
+
+    private static bool IsMenuResetCommand(string text)
+    {
+        var normalizedText = text.Trim();
+
+        return normalizedText.Equals(
+                   "/start",
+                   StringComparison.OrdinalIgnoreCase)
+               || normalizedText.Equals(
+                   "/menu",
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private void ValidateOptions()

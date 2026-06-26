@@ -27,6 +27,14 @@ public sealed class InMemoryUserStateService : IUserStateService
         state.UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    public void ClearMenuMessageId(long telegramUserId)
+    {
+        var state = Get(telegramUserId);
+
+        state.MenuMessageId = null;
+        state.UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     public void SetMenuMessageId(long telegramUserId, long messageId)
     {
         var state = Get(telegramUserId);

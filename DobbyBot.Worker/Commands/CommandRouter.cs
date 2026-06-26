@@ -1,6 +1,4 @@
 ﻿using DobbyBot.Worker.Menus;
-using DobbyBot.Worker.Services;
-using DobbyBot.Worker.Menus;
 using DobbyBot.Worker.Modules.Downloader;
 using DobbyBot.Worker.Services;
 using DobbyBot.Worker.State;
@@ -27,19 +25,20 @@ public sealed class CommandRouter
     }
 
     public async Task<BotResponse> HandleAsync(
-    long telegramUserId,
-    string text,
-    CancellationToken cancellationToken)
+        long telegramUserId,
+        string text,
+        CancellationToken cancellationToken)
     {
         var normalizedText = text.Trim();
 
-        if (normalizedText is "/start" or "/menu")
+        if (normalizedText.Equals("/start", StringComparison.OrdinalIgnoreCase) ||
+            normalizedText.Equals("/menu", StringComparison.OrdinalIgnoreCase))
         {
             _userStateService.Clear(telegramUserId);
             return MainMenu();
         }
 
-        if (normalizedText is "/help")
+        if (normalizedText.Equals("/help", StringComparison.OrdinalIgnoreCase))
         {
             return Help();
         }
@@ -63,9 +62,11 @@ public sealed class CommandRouter
             "/services" =>
                 new BotResponse(
                     await _serviceControlService.GetServicesAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.ContainersMenu()),
 
-            _ => await HandleSlashCommand(normalizedText, cancellationToken)
+            _ => await HandleSlashCommand(
+                normalizedText,
+                cancellationToken)
         };
     }
 
@@ -76,14 +77,386 @@ public sealed class CommandRouter
     {
         return callbackData switch
         {
+            // Main navigation
             "menu:main" => ClearAndReturnMainMenu(telegramUserId),
             "menu:server" => ServerMenu(),
-            "menu:ai" => AiMenu(),
-            "menu:homelab" => HomeLabMenu(),
+            "menu:containers" => ContainersMenu(),
+            "menu:apps" => AppsMenu(),
+            "menu:data" => DataLayerMenu(),
+            "menu:proxy" => ProxyMenu(),
+            "menu:monitoring" => MonitoringMenu(),
             "menu:backup" => BackupMenu(),
             "menu:downloader" => DownloaderMenu(),
+            "menu:ai" => AiMenu(),
             "menu:settings" => SettingsMenu(),
             "help" => Help(),
+
+            // Server callbacks
+            "server:status" =>
+                new BotResponse(
+                    await _serverStatusService.GetStatusAsync(cancellationToken),
+                    DobbyMenus.ServerMenu()),
+
+            "server:disk" =>
+                Placeholder(
+                    "💽 Disk",
+                    """
+                    Disk monitor hələ tam ayrılmayıb.
+
+                    Gələcəkdə burada:
+                    - root disk usage
+                    - Docker volumes
+                    - backup folder size
+                    - low disk warning
+                    göstəriləcək.
+                    """,
+                    DobbyMenus.ServerMenu()),
+
+            "server:memory" =>
+                Placeholder(
+                    "🧠 Memory",
+                    """
+                    Memory monitor hələ tam ayrılmayıb.
+
+                    Gələcəkdə burada:
+                    - RAM usage
+                    - swap usage
+                    - top memory containers
+                    göstəriləcək.
+                    """,
+                    DobbyMenus.ServerMenu()),
+
+            "server:load" =>
+                Placeholder(
+                    "🔥 CPU / Load",
+                    """
+                    CPU/load monitor hələ tam ayrılmayıb.
+
+                    Gələcəkdə burada:
+                    - uptime/load average
+                    - CPU pressure
+                    - top CPU containers
+                    göstəriləcək.
+                    """,
+                    DobbyMenus.ServerMenu()),
+
+            "server:failed-services" =>
+                Placeholder(
+                    "🧯 Failed Services",
+                    """
+                    Failed services yoxlaması hələ Docker/HomeLab modelinə keçirilməyib.
+
+                    Bare-metal systemctl yox, controlled script/operation modeli ilə yazılacaq.
+                    """,
+                    DobbyMenus.ServerMenu()),
+
+            "server:reboot-request" =>
+                Confirmation(
+                    """
+                    🔁 Reboot Request
+
+                    Bu dangerous operation sayılır.
+
+                    Production modeldə:
+                    1. active deploy/backup yoxlanacaq
+                    2. confirmation istənəcək
+                    3. audit log yazılacaq
+                    4. reboot controlled script ilə icra olunacaq
+                    """,
+                    confirmCallback: "server:reboot-confirm",
+                    cancelCallback: "menu:server"),
+
+            "server:reboot-confirm" =>
+                NotImplementedOperation(
+                    "🔁 Reboot",
+                    "Server reboot operation hələ qoşulmayıb. Bu əməliyyat production-da confirmation + audit + controlled script ilə işləyəcək.",
+                    DobbyMenus.ServerMenu()),
+
+            // Containers callbacks
+            "containers:all" =>
+                new BotResponse(
+                    await _serviceControlService.GetServicesAsync(cancellationToken),
+                    DobbyMenus.ContainersMenu()),
+
+            "containers:running" =>
+                NotImplementedOperation(
+                    "✅ Running Containers",
+                    "Docker container status hələ systemctl modelindən ayrılmayıb. Növbəti mərhələdə script-based container status yazacağıq.",
+                    DobbyMenus.ContainersMenu()),
+
+            "containers:failed" =>
+                NotImplementedOperation(
+                    "❌ Failed / Exited Containers",
+                    "Exited/failed container yoxlaması controlled Docker operation ilə yazılacaq.",
+                    DobbyMenus.ContainersMenu()),
+
+            "containers:logs" =>
+                NotImplementedOperation(
+                    "📜 Container Logs",
+                    "Container logs üçün əvvəl app/container seçimi əlavə olunmalıdır.",
+                    DobbyMenus.ContainersMenu()),
+
+            "containers:restart" =>
+                Confirmation(
+                    """
+                    🔄 Restart Container
+
+                    Bu dangerous operation sayılır.
+
+                    Növbəti mərhələdə:
+                    - container/app seçimi
+                    - confirmation
+                    - audit log
+                    - controlled restart script
+                    əlavə ediləcək.
+                    """,
+                    confirmCallback: "containers:restart-confirm",
+                    cancelCallback: "menu:containers"),
+
+            "containers:restart-confirm" =>
+                NotImplementedOperation(
+                    "🔄 Restart Container",
+                    "Restart container operation hələ qoşulmayıb.",
+                    DobbyMenus.ContainersMenu()),
+
+            // Apps
+            "apps:dobby" => AppDetails(
+                "thisisdobby",
+                "🧦 This is Dobby"),
+
+            "apps:planzy" => AppDetails(
+                "planzy",
+                "📅 Planzy"),
+
+            "apps:golotto" => AppDetails(
+                "golotto",
+                "🎲 GoLotto"),
+
+            "apps:combatfight" => AppDetails(
+                "combatfight",
+                "🥊 CombatFight"),
+
+            "apps:add" =>
+                new BotResponse(
+                    """
+                    ➕ Add App
+
+                    Bu feature sonra gələcək.
+
+                    Gələcək app modeli:
+                    - app key
+                    - compose path
+                    - source path
+                    - db name
+                    - healthcheck url
+                    - backup policy
+                    - deploy script
+                    """,
+                    DobbyMenus.AppsMenu()),
+
+            // Data layer
+            "data:postgres" =>
+                NotImplementedOperation(
+                    "🐘 PostgreSQL",
+                    """
+                    PostgreSQL panel sonra gələcək.
+
+                    Hazır container:
+                    dobby-postgres
+
+                    Gələcək:
+                    - DB list
+                    - connection status
+                    - backup status
+                    - per-app DB user check
+                    """,
+                    DobbyMenus.DataLayerMenu()),
+
+            "data:redis" =>
+                NotImplementedOperation(
+                    "⚡ Redis",
+                    """
+                    Redis panel sonra gələcək.
+
+                    Hazır container:
+                    dobby-redis
+
+                    Gələcək:
+                    - ping
+                    - memory usage
+                    - key count
+                    - Dobby state backend
+                    """,
+                    DobbyMenus.DataLayerMenu()),
+
+            "data:volumes" =>
+                NotImplementedOperation(
+                    "💾 Volumes",
+                    "Docker volumes və data folders üçün status panel sonra yazılacaq.",
+                    DobbyMenus.DataLayerMenu()),
+
+            "data:backups" =>
+                NotImplementedOperation(
+                    "🔐 DB Backups",
+                    "Database backup list və verify workflow sonra yazılacaq.",
+                    DobbyMenus.DataLayerMenu()),
+
+            // Proxy & SSL
+            "proxy:npm-status" =>
+                NotImplementedOperation(
+                    "🌍 Nginx Proxy Manager",
+                    """
+                    NPM status sonra gələcək.
+
+                    Hazır container:
+                    dobby-npm
+
+                    Gələcək:
+                    - container status
+                    - proxy host count
+                    - SSL status
+                    - domain checks
+                    """,
+                    DobbyMenus.ProxyMenu()),
+
+            "proxy:ssl" =>
+                NotImplementedOperation(
+                    "🔐 SSL Certificates",
+                    "SSL certificate check sonra əlavə olunacaq.",
+                    DobbyMenus.ProxyMenu()),
+
+            "proxy:domains" =>
+                NotImplementedOperation(
+                    "🧪 Check Domains",
+                    "Domain healthcheck və SSL expiry check sonra əlavə olunacaq.",
+                    DobbyMenus.ProxyMenu()),
+
+            "proxy:network" =>
+                NotImplementedOperation(
+                    "📡 Proxy Network",
+                    "dobby_proxy network status sonra əlavə olunacaq.",
+                    DobbyMenus.ProxyMenu()),
+
+            // Monitoring
+            "monitoring:kuma" =>
+                NotImplementedOperation(
+                    "💚 Uptime Kuma",
+                    """
+                    Uptime Kuma panel sonra gələcək.
+
+                    Hazır container:
+                    dobby-uptime-kuma
+
+                    Gələcək:
+                    - monitor summary
+                    - down services
+                    - recent incidents
+                    """,
+                    DobbyMenus.MonitoringMenu()),
+
+            "monitoring:summary" =>
+                NotImplementedOperation(
+                    "📈 Health Summary",
+                    "HomeLab health summary sonra yazılacaq.",
+                    DobbyMenus.MonitoringMenu()),
+
+            "monitoring:alerts" =>
+                NotImplementedOperation(
+                    "🚨 Alerts",
+                    "Alert list və notification rules sonra əlavə olunacaq.",
+                    DobbyMenus.MonitoringMenu()),
+
+            "monitoring:incidents" =>
+                NotImplementedOperation(
+                    "🧾 Recent Incidents",
+                    "Incident history üçün persistence lazımdır. Sonra PostgreSQL ilə yazılacaq.",
+                    DobbyMenus.MonitoringMenu()),
+
+            // Backup
+            "backup:planzy-db-request" =>
+                Confirmation(
+                    """
+                    📦 Backup Planzy DB
+
+                    Bu əməliyyat DB backup yaradacaq.
+
+                    Production workflow:
+                    1. DB connection yoxla
+                    2. pg_dump al
+                    3. backup folderə yaz
+                    4. checksum yarat
+                    5. result logla
+                    """,
+                    confirmCallback: "backup:planzy-db-confirm",
+                    cancelCallback: "menu:backup"),
+
+            "backup:golotto-db-request" =>
+                Confirmation(
+                    """
+                    📦 Backup GoLotto DB
+
+                    Bu əməliyyat GoLotto DB backup yaradacaq.
+                    Hələ real runner qoşulmayıb.
+                    """,
+                    confirmCallback: "backup:golotto-db-confirm",
+                    cancelCallback: "menu:backup"),
+
+            "backup:dobby-config-request" =>
+                Confirmation(
+                    """
+                    📦 Backup Dobby Config
+
+                    Bu əməliyyat Dobby config/secrets olmayan runtime config backup üçün istifadə olunacaq.
+                    Real secrets backup edilməməlidir.
+                    """,
+                    confirmCallback: "backup:dobby-config-confirm",
+                    cancelCallback: "menu:backup"),
+
+            "backup:planzy-db-confirm" =>
+                NotImplementedOperation(
+                    "📦 Backup Planzy DB",
+                    "Planzy DB backup runner hələ qoşulmayıb.",
+                    DobbyMenus.BackupMenu()),
+
+            "backup:golotto-db-confirm" =>
+                NotImplementedOperation(
+                    "📦 Backup GoLotto DB",
+                    "GoLotto DB backup runner hələ qoşulmayıb.",
+                    DobbyMenus.BackupMenu()),
+
+            "backup:dobby-config-confirm" =>
+                NotImplementedOperation(
+                    "📦 Backup Dobby Config",
+                    "Dobby config backup runner hələ qoşulmayıb.",
+                    DobbyMenus.BackupMenu()),
+
+            "backup:list" =>
+                NotImplementedOperation(
+                    "🗂 Backup List",
+                    "Backup list üçün storage folder scan və metadata lazımdır. Sonra yazılacaq.",
+                    DobbyMenus.BackupMenu()),
+
+            "backup:verify" =>
+                NotImplementedOperation(
+                    "🧪 Verify Backup",
+                    "Backup verify workflow sonra yazılacaq.",
+                    DobbyMenus.BackupMenu()),
+
+            // Downloader
+            "downloader:telegram-file" =>
+                new BotResponse(
+                    """
+                    📤 Send Telegram File
+
+                    İstifadə qaydası:
+                    Bot-a photo, video və ya document göndər.
+
+                    Dobby onu serverdə downloads folderinə save edəcək.
+
+                    Qeyd:
+                    Bu flow ayrıca Telegram file downloader kimi tamamlanacaq.
+                    """,
+                    DobbyMenus.DownloaderMenu()),
 
             "downloader:input" => StartDownloaderInputMode(telegramUserId),
 
@@ -97,75 +470,258 @@ public sealed class CommandRouter
                     telegramUserId,
                     DownloaderSource.Telegram),
 
+            "downloader:folder" =>
+                NotImplementedOperation(
+                    "🗂 Downloads Folder",
+                    "Downloads folder list sonra əlavə olunacaq.",
+                    DobbyMenus.DownloaderMenu()),
+
+            "downloader:cleanup-request" =>
+                Confirmation(
+                    """
+                    🧹 Cleanup Temp
+
+                    Bu əməliyyat temp/download cache təmizləyəcək.
+
+                    Real runner hələ qoşulmayıb.
+                    """,
+                    confirmCallback: "downloader:cleanup-confirm",
+                    cancelCallback: "menu:downloader"),
+
+            "downloader:cleanup-confirm" =>
+                NotImplementedOperation(
+                    "🧹 Cleanup Temp",
+                    "Downloader cleanup runner hələ qoşulmayıb.",
+                    DobbyMenus.DownloaderMenu()),
+
             "downloader:cancel" => ClearAndReturnMainMenu(telegramUserId),
 
-            "server:status" =>
-                new BotResponse(
-                    await _serverStatusService.GetStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
-
-            "server:services" =>
-                new BotResponse(
-                    await _serviceControlService.GetServicesAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
-
-            "server:logs:golotto" =>
-                new BotResponse(
-                    await _serviceControlService.LogsAsync("golotto", cancellationToken),
-                    DobbyMenus.ServerMenu()),
-
-            "server:restart:golotto" =>
-                new BotResponse(
-                    await _serviceControlService.RestartAsync("golotto", cancellationToken),
-                    DobbyMenus.ServerMenu()),
-
+            // AI
             "ai:ask" =>
                 new BotResponse(
-                    "🤖 Ask Dobby hələ aktiv deyil. Sonra burada AI chat mode əlavə edəcəyik.",
+                    """
+                    🧠 Ask Dobby
+
+                    AI chat mode hələ aktiv deyil.
+
+                    Gələcəkdə:
+                    - local Ollama
+                    - log explanation
+                    - command recommendation
+                    - incident diagnosis
+                    qoşula bilər.
+                    """,
                     DobbyMenus.AiMenu()),
 
-            "ai:local-status" =>
+            "ai:explain-logs" =>
                 new BotResponse(
-                    "🧠 Local AI status hələ aktiv deyil. Gələcəkdə Ollama/Qwen/Llama statusunu burada göstərəcəyik.",
+                    """
+                    📋 Explain Logs
+
+                    Log izahı üçün əvvəl log source seçimi lazımdır:
+                    - Planzy
+                    - GoLotto
+                    - Dobby
+                    - NPM
+                    - PostgreSQL
+
+                    AI modulu sonra qoşulacaq.
+                    """,
                     DobbyMenus.AiMenu()),
 
-            "homelab:docker" =>
+            "ai:diagnose" =>
                 new BotResponse(
-                    "🐳 Docker bölməsi hələ aktiv deyil. Sonra container list, logs və restart əlavə edəcəyik.",
-                    DobbyMenus.HomeLabMenu()),
+                    """
+                    🧪 Diagnose Error
 
-            "homelab:nginx" =>
+                    Dobby gələcəkdə error loglarını oxuyub səbəb və fix təklif edəcək.
+                    Hələ aktiv deyil.
+                    """,
+                    DobbyMenus.AiMenu()),
+
+            "ai:suggest-fix" =>
                 new BotResponse(
-                    "🌐 Nginx bölməsi hələ aktiv deyil. Sonra nginx status, reload və config test əlavə edəcəyik.",
-                    DobbyMenus.HomeLabMenu()),
+                    """
+                    🛠 Suggest Fix
 
-            "homelab:network" =>
+                    Bu feature sonra gələcək.
+
+                    Qayda:
+                    Dobby heç vaxt fix-i avtomatik tətbiq etməməlidir.
+                    Əvvəl izah, sonra confirmation.
+                    """,
+                    DobbyMenus.AiMenu()),
+
+            // Settings
+            "settings:admin" =>
                 new BotResponse(
-                    "📡 Network bölməsi hələ aktiv deyil. Sonra IP, ping, DNS və Tailscale status əlavə edəcəyik.",
-                    DobbyMenus.HomeLabMenu()),
+                    """
+                    👤 Admin
 
-            "backup:now" =>
+                    Bot admin-only mode-da işləyir.
+
+                    Yalnız konfiqurasiya olunmuş Telegram Admin ID istifadə edə bilər.
+                    Non-admin istifadəçilər cavab almır.
+                    """,
+                    DobbyMenus.SettingsMenu()),
+
+            "settings:security" =>
                 new BotResponse(
-                    "💾 Backup bölməsi hələ aktiv deyil. Sonra PostgreSQL və project backup əlavə edəcəyik.",
-                    DobbyMenus.BackupMenu()),
+                    """
+                    🔐 Security
 
-            "backup:last" =>
+                    Prinsiplər:
+                    - Dobby root olmamalıdır
+                    - unrestricted shell yoxdur
+                    - Docker socket default mount olunmur
+                    - dangerous operation confirmation istəyir
+                    - operation-lar audit olunmalıdır
+                    """,
+                    DobbyMenus.SettingsMenu()),
+
+            "settings:audit" =>
+                NotImplementedOperation(
+                    "🧾 Audit Logs",
+                    "Audit log üçün PostgreSQL persistence əlavə olunacaq.",
+                    DobbyMenus.SettingsMenu()),
+
+            "settings:state" =>
                 new BotResponse(
-                    "📦 Backup history hələ aktiv deyil.",
-                    DobbyMenus.BackupMenu()),
+                    """
+                    🧠 State
 
-            "settings:bot-info" =>
+                    Hazırda state InMemoryUserStateService ilə saxlanır.
+
+                    Bu o deməkdir:
+                    - bot restart olarsa state itir
+                    - menu message id itir
+                    - pending confirmation itir
+
+                    Production üçün Redis və ya PostgreSQL state backend lazımdır.
+                    """,
+                    DobbyMenus.SettingsMenu()),
+
+            "settings:about" =>
                 new BotResponse(
                     BotInfo(),
                     DobbyMenus.SettingsMenu()),
 
-            "settings:admin-info" =>
-                new BotResponse(
-                    "👤 Admin mode aktivdir. Bu bot yalnız icazəli Telegram ID üçün cavab verir.",
-                    DobbyMenus.SettingsMenu()),
+            // Generic app operations
+            _ when callbackData.EndsWith(":status", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                AppOperationPlaceholder(callbackData, "📊 Status"),
+
+            _ when callbackData.EndsWith(":logs", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                AppOperationPlaceholder(callbackData, "📜 Logs"),
+
+            _ when callbackData.EndsWith(":healthcheck", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                AppOperationPlaceholder(callbackData, "🧪 Healthcheck"),
+
+            _ when callbackData.EndsWith(":restart-request", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                Confirmation(
+                    """
+                    🔄 Restart request
+
+                    Bu dangerous operation sayılır.
+
+                    Production model:
+                    1. app status yoxlanır
+                    2. confirmation alınır
+                    3. restart script işləyir
+                    4. healthcheck gözlənir
+                    5. result audit log-a yazılır
+                    """,
+                    confirmCallback: callbackData.Replace("-request", "-confirm", StringComparison.OrdinalIgnoreCase),
+                    cancelCallback: "menu:apps"),
+
+            _ when callbackData.EndsWith(":update-request", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                Confirmation(
+                    """
+                    ⬆️ Update request
+
+                    Production update workflow:
+                    1. status yoxla
+                    2. backup al
+                    3. build/image hazırla
+                    4. deploy et
+                    5. healthcheck gözlə
+                    6. fail olsa rollback et
+                    """,
+                    confirmCallback: callbackData.Replace("-request", "-confirm", StringComparison.OrdinalIgnoreCase),
+                    cancelCallback: "menu:apps"),
+
+            _ when callbackData.EndsWith(":backup-db-request", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                Confirmation(
+                    """
+                    💾 Backup DB request
+
+                    Bu əməliyyat DB backup üçün istifadə olunacaq.
+
+                    Qayda:
+                    Backup operation mütləq audit log-a yazılmalıdır.
+                    """,
+                    confirmCallback: callbackData.Replace("-request", "-confirm", StringComparison.OrdinalIgnoreCase),
+                    cancelCallback: "menu:apps"),
+
+            _ when callbackData.EndsWith("-confirm", StringComparison.OrdinalIgnoreCase) =>
+                NotImplementedOperation(
+                    "✅ Confirm received",
+                    """
+                    Confirmation qəbul edildi.
+
+                    Real operation runner hələ qoşulmayıb.
+                    Bu mərhələdə yalnız menu və workflow stabilizasiya edirik.
+                    """,
+                    DobbyMenus.MainMenu()),
 
             _ => new BotResponse(
-                "Command tanınmadı. Əsas menyuya qayıtdım.",
+                """
+                Command tanınmadı.
+
+                Əsas menyuya qayıtdım.
+                """,
+                DobbyMenus.MainMenu())
+        };
+    }
+
+    private async Task<BotResponse> HandleSlashCommand(
+        string text,
+        CancellationToken cancellationToken)
+    {
+        var parts = text.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (parts.Length == 0)
+        {
+            return MainMenu();
+        }
+
+        var command = parts[0].ToLowerInvariant();
+
+        return command switch
+        {
+            "/restart" when parts.Length == 2 =>
+                new BotResponse(
+                    await _serviceControlService.RestartAsync(parts[1], cancellationToken),
+                    DobbyMenus.ContainersMenu()),
+
+            "/logs" when parts.Length == 2 =>
+                new BotResponse(
+                    await _serviceControlService.LogsAsync(parts[1], cancellationToken),
+                    DobbyMenus.ContainersMenu()),
+
+            _ => new BotResponse(
+                """
+                Command tanınmadı.
+
+                /menu yaz və ya menudan seçim et.
+                """,
                 DobbyMenus.MainMenu())
         };
     }
@@ -178,21 +734,21 @@ public sealed class CommandRouter
 
         return new BotResponse(
             """
-        📥 Downloader
+            📥 Downloader
 
-        Instagram və ya Telegram linki göndər.
+            Instagram və ya Telegram linki göndər.
 
-        Dəstəklənən nümunələr:
-        https://www.instagram.com/p/...
-        https://www.instagram.com/reel/...
-        https://www.instagram.com/stories/username/...
-        https://t.me/channel/123
-        https://t.me/username
-        @username
-        username
+            Dəstəklənən nümunələr:
+            https://www.instagram.com/p/...
+            https://www.instagram.com/reel/...
+            https://www.instagram.com/stories/username/...
+            https://t.me/channel/123
+            https://t.me/username
+            @username
+            username
 
-        Username göndərsən, Instagram və ya Telegram seçimi çıxacaq.
-        """,
+            Username göndərsən, Instagram və ya Telegram seçimi çıxacaq.
+            """,
             DobbyMenus.DownloaderMenu());
     }
 
@@ -206,10 +762,10 @@ public sealed class CommandRouter
         {
             return new BotResponse(
                 """
-            Link və ya username tanınmadı.
+                Link və ya username tanınmadı.
 
-            Instagram/TG linki və ya username göndər.
-            """,
+                Instagram/TG linki və ya username göndər.
+                """,
                 DobbyMenus.DownloaderMenu());
         }
 
@@ -225,10 +781,10 @@ public sealed class CommandRouter
 
             return new BotResponse(
                 $"""
-            Username tapıldı: {request.Value}
+                Username tapıldı: {request.Value}
 
-            Bu username hansı platformadandır?
-            """,
+                Bu username hansı platformadandır?
+                """,
                 DobbyMenus.DownloaderPlatformSelectionMenu());
         }
 
@@ -275,15 +831,15 @@ public sealed class CommandRouter
     {
         return new BotResponse(
             $"""
-        📥 Downloader request parsed
+            📥 Downloader request parsed
 
-        Source: {request.Source}
-        Type: {request.ContentType}
-        Value: {request.Value}
+            Source: {request.Source}
+            Type: {request.ContentType}
+            Value: {request.Value}
 
-        Real download hələ qoşulmayıb.
-        Növbəti mərhələdə bu request uyğun Instagram/Telegram provider-ə yönləndiriləcək.
-        """,
+            Real download hələ qoşulmayıb.
+            Növbəti mərhələdə bu request uyğun provider-ə yönləndiriləcək.
+            """,
             DobbyMenus.DownloaderMenu());
     }
 
@@ -293,58 +849,15 @@ public sealed class CommandRouter
         return MainMenu();
     }
 
-    private static BotResponse DownloaderMenu()
-    {
-        return new BotResponse(
-            """
-        📥 Downloader
-
-        Instagram və ya Telegram linki / username göndər.
-        Bot özü linkdən platformanı və kontent tipini tanıyacaq.
-        """,
-            DobbyMenus.DownloaderMenu());
-    }
-
-    private async Task<BotResponse> HandleSlashCommand(
-        string text,
-        CancellationToken cancellationToken)
-    {
-        var parts = text.Split(
-            ' ',
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (parts.Length == 0)
-        {
-            return MainMenu();
-        }
-
-        var command = parts[0].ToLowerInvariant();
-
-        return command switch
-        {
-            "/restart" when parts.Length == 2 =>
-                new BotResponse(
-                    await _serviceControlService.RestartAsync(parts[1], cancellationToken),
-                    DobbyMenus.ServerMenu()),
-
-            "/logs" when parts.Length == 2 =>
-                new BotResponse(
-                    await _serviceControlService.LogsAsync(parts[1], cancellationToken),
-                    DobbyMenus.ServerMenu()),
-
-            _ => new BotResponse(
-                "Command tanınmadı. /menu yaz və ya menudan seçim et.",
-                DobbyMenus.MainMenu())
-        };
-    }
-
     private static BotResponse MainMenu()
     {
         return new BotResponse(
             """
-            🧦 DobbyBot
+            🧦 This is Dobby
 
-            Əsas menyudan seçim et:
+            HomeLab Guardian / Telegram DevOps Assistant
+
+            Mən sənin HomeLab-ını izləmək, idarə etmək və təhlükəsiz operation-ları icra etmək üçün buradayam.
             """,
             DobbyMenus.MainMenu());
     }
@@ -353,62 +866,269 @@ public sealed class CommandRouter
     {
         return new BotResponse(
             """
-            🖥 Server bölməsi
+            🖥 Server
 
-            Buradan server statusunu, service-ləri və GoLotto loglarını idarə edə bilərsən.
+            Server səviyyəsində status, disk, memory, load və failed service yoxlamaları.
+
+            Dangerous operation-lar confirmation istəyəcək.
             """,
             DobbyMenus.ServerMenu());
     }
 
-    private static BotResponse AiMenu()
+    private static BotResponse ContainersMenu()
     {
         return new BotResponse(
             """
-            🤖 AI Assistant bölməsi
+            🧩 Containers
 
-            Bu bölmə gələcəkdə local AI/Ollama və ya API əsaslı assistant üçün istifadə olunacaq.
+            HomeLab Docker container-larının statusu, logs və restart əməliyyatları.
+
+            Qayda:
+            Docker socket birbaşa açılmayacaq.
+            Controlled operation/script modeli istifadə olunacaq.
             """,
-            DobbyMenus.AiMenu());
+            DobbyMenus.ContainersMenu());
     }
 
-    private static BotResponse HomeLabMenu()
+    private static BotResponse AppsMenu()
     {
         return new BotResponse(
             """
-            🧪 HomeLab bölməsi
+            🚀 Apps
 
-            Docker, Nginx, network və digər homelab servisləri burada olacaq.
+            HomeLab-da idarə etdiyimiz app-lər:
+
+            🧦 This is Dobby
+            📅 Planzy
+            🎲 GoLotto
+            🥊 CombatFight
+
+            Hər app üçün status, logs, restart, update, backup və healthcheck workflow olacaq.
             """,
-            DobbyMenus.HomeLabMenu());
+            DobbyMenus.AppsMenu());
+    }
+
+    private static BotResponse DataLayerMenu()
+    {
+        return new BotResponse(
+            """
+            🗄 Data Layer
+
+            Hazır data layer:
+
+            🐘 PostgreSQL: dobby-postgres
+            ⚡ Redis: dobby-redis
+
+            Gələcəkdə DB status, backup, restore və Redis state burada idarə olunacaq.
+            """,
+            DobbyMenus.DataLayerMenu());
+    }
+
+    private static BotResponse ProxyMenu()
+    {
+        return new BotResponse(
+            """
+            🌐 Proxy & SSL
+
+            Hazır proxy layer:
+
+            🌍 Nginx Proxy Manager: dobby-npm
+            📡 Network: dobby_proxy
+
+            SSL certificate, domain healthcheck və proxy status burada olacaq.
+            """,
+            DobbyMenus.ProxyMenu());
+    }
+
+    private static BotResponse MonitoringMenu()
+    {
+        return new BotResponse(
+            """
+            📊 Monitoring
+
+            Hazır monitoring:
+
+            💚 Uptime Kuma: dobby-uptime-kuma
+
+            Health summary, alerts və recent incidents burada olacaq.
+            """,
+            DobbyMenus.MonitoringMenu());
     }
 
     private static BotResponse BackupMenu()
     {
         return new BotResponse(
             """
-            💾 Backup bölməsi
+            💾 Backup
 
-            Gələcəkdə database və project backup-ları buradan idarə olunacaq.
+            Backup workflow:
+
+            - app database backup
+            - Dobby config backup
+            - backup list
+            - backup verify
+
+            Real runner sonra controlled scripts ilə qoşulacaq.
             """,
             DobbyMenus.BackupMenu());
+    }
+
+    private static BotResponse DownloaderMenu()
+    {
+        return new BotResponse(
+            """
+            📥 Downloader
+
+            Telegram file, link və username parsing üçün bölmə.
+
+            Qayda:
+            Public/authorized content xaricində private bypass etməyəcəyik.
+            """,
+            DobbyMenus.DownloaderMenu());
+    }
+
+    private static BotResponse AiMenu()
+    {
+        return new BotResponse(
+            """
+            🤖 AI Assistant
+
+            Gələcək Dobby AI modulu:
+
+            🧠 Ask Dobby
+            📋 Explain Logs
+            🧪 Diagnose Error
+            🛠 Suggest Fix
+
+            Qayda:
+            AI heç vaxt avtomatik dangerous operation icra etməməlidir.
+            """,
+            DobbyMenus.AiMenu());
     }
 
     private static BotResponse SettingsMenu()
     {
         return new BotResponse(
             """
-            ⚙️ Settings bölməsi
+            ⚙️ Settings
 
-            Bot məlumatları və admin məlumatları burada olacaq.
+            Admin, security, audit və state management bölməsi.
             """,
             DobbyMenus.SettingsMenu());
+    }
+
+    private static BotResponse AppDetails(
+        string appKey,
+        string title)
+    {
+        return new BotResponse(
+            $"""
+            {title}
+
+            App operation panel.
+
+            Planned workflow:
+            📊 Status
+            📜 Logs
+            🔄 Restart
+            ⬆️ Update
+            💾 Backup DB
+            🧪 Healthcheck
+
+            App key:
+            {appKey}
+
+            Safety:
+            Restart, update və backup kimi əməliyyatlar controlled operation və confirmation ilə işləyəcək.
+            """,
+            DobbyMenus.AppDetailsMenu(appKey));
+    }
+
+    private static BotResponse AppOperationPlaceholder(
+        string callbackData,
+        string operationTitle)
+    {
+        var appKey = ExtractAppKey(callbackData);
+
+        return new BotResponse(
+            $"""
+            {operationTitle}
+
+            App: {appKey}
+
+            Real operation runner hələ qoşulmayıb.
+
+            Gələcək model:
+            - operation request yaradılır
+            - permission yoxlanır
+            - risk level yoxlanır
+            - confirmation lazımdırsa istənir
+            - script/runner işləyir
+            - audit log yazılır
+            - nəticə Telegram-a göndərilir
+            """,
+            DobbyMenus.AppDetailsMenu(appKey));
+    }
+
+    private static string ExtractAppKey(string callbackData)
+    {
+        var parts = callbackData.Split(
+            ':',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return parts.Length >= 2
+            ? parts[1]
+            : "unknown";
+    }
+
+    private static BotResponse Confirmation(
+        string text,
+        string confirmCallback,
+        string cancelCallback)
+    {
+        return new BotResponse(
+            text,
+            DobbyMenus.ConfirmationMenu(
+                confirmCallback,
+                cancelCallback));
+    }
+
+    private static BotResponse Placeholder(
+        string title,
+        string body,
+        object replyMarkup)
+    {
+        return new BotResponse(
+            $"""
+            {title}
+
+            {body}
+            """,
+            (dynamic)replyMarkup);
+    }
+
+    private static BotResponse NotImplementedOperation(
+        string title,
+        string body,
+        object replyMarkup)
+    {
+        return new BotResponse(
+            $"""
+            {title}
+
+            {body}
+
+            Status:
+            Hələ production runner qoşulmayıb.
+            """,
+            (dynamic)replyMarkup);
     }
 
     private static BotResponse Help()
     {
         return new BotResponse(
             """
-            🧦 DobbyBot Help
+            🧦 This is Dobby Help
 
             Əsas command-lar:
             /menu
@@ -417,12 +1137,16 @@ public sealed class CommandRouter
             /logs golotto
             /restart golotto
 
-            Daha rahat istifadə üçün inline menudan seçim et.
+            Yeni məqsəd:
+            Dobby HomeLab Guardian / Telegram DevOps Assistant-dır.
 
             Təhlükəsizlik:
-            Bot yalnız admin Telegram ID üçün cavab verir.
-            Raw terminal command işlətmir.
-            Yalnız whitelist edilmiş əmrlər işləyir.
+            - Bot yalnız admin Telegram ID üçün cavab verir
+            - Raw terminal yoxdur
+            - Root bot olmayacaq
+            - Docker socket default açılmayacaq
+            - Dangerous operation confirmation istəyəcək
+            - Operation-lar audit olunacaq
             """,
             DobbyMenus.MainMenu());
     }
@@ -430,19 +1154,32 @@ public sealed class CommandRouter
     private static string BotInfo()
     {
         return """
-        ℹ️ DobbyBot
+        ℹ️ This is Dobby
 
         Username: @thisisdobby_bot
         Mode: Long polling
+        Runtime: .NET 8 Worker Service
         Access: Admin only
-        Runtime: .NET Worker Service
 
-        Modules:
-        🖥 Server
-        🤖 AI Assistant
-        🧪 HomeLab
-        💾 Backup
-        ⚙️ Settings
+        Role:
+        HomeLab Guardian / Telegram DevOps Assistant
+
+        HomeLab:
+        Base path: /srv/homelab
+        Apps: /srv/homelab/apps
+        Compose: /srv/homelab/compose
+
+        Containers:
+        dobby-postgres
+        dobby-redis
+        dobby-npm
+        dobby-uptime-kuma
+        dobby-portainer
+
+        Networks:
+        dobby_proxy
+        dobby_internal
+        dobby_data
         """;
     }
 }

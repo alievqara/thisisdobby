@@ -11,53 +11,28 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                Button("🖥 Server", "menu:server"),
-                Button("🤖 AI Assistant", "menu:ai")
-            ],
-            [
-                Button("🧪 HomeLab", "menu:homelab"),
-                Button("💾 Backup", "menu:backup")
-            ],
-            [
-                Button("📥 Downloader", "menu:downloader"),
-                Button("⚙️ Settings", "menu:settings")
-            ],
-            [
-                Button("❓ Help", "help")
-            ]
-            ]
-        };
-    }
-
-    public static TelegramInlineKeyboardMarkup DownloaderMenu()
-    {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
+                    Button("🖥 Server", "menu:server"),
+                    Button("🧩 Containers", "menu:containers")
+                ],
                 [
-                Button("📥 Send Link / Username", "downloader:input")
-            ],
-            [
-                Button("⬅️ Main Menu", "menu:main")
-            ]
-            ]
-        };
-    }
-
-    public static TelegramInlineKeyboardMarkup DownloaderPlatformSelectionMenu()
-    {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
+                    Button("🚀 Apps", "menu:apps"),
+                    Button("🗄 Data Layer", "menu:data")
+                ],
                 [
-                Button("Instagram", "downloader:platform:instagram"),
-                Button("Telegram", "downloader:platform:telegram")
-            ],
-            [
-                Button("Cancel", "downloader:cancel")
-            ]
+                    Button("🌐 Proxy & SSL", "menu:proxy"),
+                    Button("📊 Monitoring", "menu:monitoring")
+                ],
+                [
+                    Button("💾 Backup", "menu:backup"),
+                    Button("📥 Downloader", "menu:downloader")
+                ],
+                [
+                    Button("🤖 AI Assistant", "menu:ai"),
+                    Button("⚙️ Settings", "menu:settings")
+                ],
+                [
+                    Button("❓ Help", "help")
+                ]
             ]
         };
     }
@@ -70,55 +45,163 @@ public static class DobbyMenus
             [
                 [
                     Button("📊 Status", "server:status"),
-                    Button("🧩 Services", "server:services")
+                    Button("💽 Disk", "server:disk")
                 ],
                 [
-                    Button("📜 GoLotto Logs", "server:logs:golotto")
+                    Button("🧠 Memory", "server:memory"),
+                    Button("🔥 CPU / Load", "server:load")
                 ],
                 [
-                    Button("🔄 Restart GoLotto", "server:restart:golotto")
+                    Button("🧯 Failed Services", "server:failed-services")
                 ],
                 [
-                    Button("⬅️ Main Menu", "menu:main")
+                    Button("🔁 Reboot Request", "server:reboot-request")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
                 ]
             ]
         };
     }
 
-    public static TelegramInlineKeyboardMarkup AiMenu()
+    public static TelegramInlineKeyboardMarkup ContainersMenu()
     {
         return new TelegramInlineKeyboardMarkup
         {
             InlineKeyboard =
             [
                 [
-                    Button("💬 Ask Dobby", "ai:ask")
+                    Button("📦 All Containers", "containers:all"),
+                    Button("✅ Running", "containers:running")
                 ],
                 [
-                    Button("🧠 Local AI Status", "ai:local-status")
+                    Button("❌ Failed / Exited", "containers:failed")
                 ],
                 [
-                    Button("⬅️ Main Menu", "menu:main")
+                    Button("📜 Logs", "containers:logs"),
+                    Button("🔄 Restart", "containers:restart")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
                 ]
             ]
         };
     }
 
-    public static TelegramInlineKeyboardMarkup HomeLabMenu()
+    public static TelegramInlineKeyboardMarkup AppsMenu()
     {
         return new TelegramInlineKeyboardMarkup
         {
             InlineKeyboard =
             [
                 [
-                    Button("🐳 Docker", "homelab:docker")
+                    Button("🧦 This is Dobby", "apps:dobby")
                 ],
                 [
-                    Button("🌐 Nginx", "homelab:nginx"),
-                    Button("📡 Network", "homelab:network")
+                    Button("📅 Planzy", "apps:planzy"),
+                    Button("🎲 GoLotto", "apps:golotto")
                 ],
                 [
-                    Button("⬅️ Main Menu", "menu:main")
+                    Button("🥊 CombatFight", "apps:combatfight")
+                ],
+                [
+                    Button("➕ Add App", "apps:add")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup AppDetailsMenu(string appKey)
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("📊 Status", $"app:{appKey}:status"),
+                    Button("📜 Logs", $"app:{appKey}:logs")
+                ],
+                [
+                    Button("🔄 Restart", $"app:{appKey}:restart-request"),
+                    Button("⬆️ Update", $"app:{appKey}:update-request")
+                ],
+                [
+                    Button("💾 Backup DB", $"app:{appKey}:backup-db-request"),
+                    Button("🧪 Healthcheck", $"app:{appKey}:healthcheck")
+                ],
+                [
+                    Button("⬅️ Apps", "menu:apps"),
+                    Button("🏠 Home", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup DataLayerMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("🐘 PostgreSQL", "data:postgres"),
+                    Button("⚡ Redis", "data:redis")
+                ],
+                [
+                    Button("💾 Volumes", "data:volumes"),
+                    Button("🔐 DB Backups", "data:backups")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup ProxyMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("🌍 NPM Status", "proxy:npm-status")
+                ],
+                [
+                    Button("🔐 SSL Certificates", "proxy:ssl"),
+                    Button("🧪 Check Domains", "proxy:domains")
+                ],
+                [
+                    Button("📡 Proxy Network", "proxy:network")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup MonitoringMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("💚 Uptime Kuma", "monitoring:kuma")
+                ],
+                [
+                    Button("📈 Health Summary", "monitoring:summary"),
+                    Button("🚨 Alerts", "monitoring:alerts")
+                ],
+                [
+                    Button("🧾 Recent Incidents", "monitoring:incidents")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
                 ]
             ]
         };
@@ -131,13 +214,83 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                    Button("💾 Backup Now", "backup:now")
+                    Button("📦 Backup Planzy DB", "backup:planzy-db-request")
                 ],
                 [
-                    Button("📦 Last Backups", "backup:last")
+                    Button("📦 Backup GoLotto DB", "backup:golotto-db-request")
                 ],
                 [
-                    Button("⬅️ Main Menu", "menu:main")
+                    Button("📦 Backup Dobby Config", "backup:dobby-config-request")
+                ],
+                [
+                    Button("🗂 Backup List", "backup:list"),
+                    Button("🧪 Verify Backup", "backup:verify")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup DownloaderMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("📤 Send Telegram File", "downloader:telegram-file")
+                ],
+                [
+                    Button("🔗 Send Link / Username", "downloader:input")
+                ],
+                [
+                    Button("🗂 Downloads Folder", "downloader:folder"),
+                    Button("🧹 Cleanup Temp", "downloader:cleanup-request")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup DownloaderPlatformSelectionMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("Instagram", "downloader:platform:instagram"),
+                    Button("Telegram", "downloader:platform:telegram")
+                ],
+                [
+                    Button("Cancel", "downloader:cancel")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup AiMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("🧠 Ask Dobby", "ai:ask")
+                ],
+                [
+                    Button("📋 Explain Logs", "ai:explain-logs"),
+                    Button("🧪 Diagnose Error", "ai:diagnose")
+                ],
+                [
+                    Button("🛠 Suggest Fix", "ai:suggest-fix")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
                 ]
             ]
         };
@@ -150,13 +303,34 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                    Button("ℹ️ Bot Info", "settings:bot-info")
+                    Button("👤 Admin", "settings:admin"),
+                    Button("🔐 Security", "settings:security")
                 ],
                 [
-                    Button("👤 Admin Info", "settings:admin-info")
+                    Button("🧾 Audit Logs", "settings:audit"),
+                    Button("🧠 State", "settings:state")
                 ],
                 [
-                    Button("⬅️ Main Menu", "menu:main")
+                    Button("ℹ️ About Dobby", "settings:about")
+                ],
+                [
+                    Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup ConfirmationMenu(
+        string confirmCallback,
+        string cancelCallback = "menu:main")
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("✅ Confirm", confirmCallback),
+                    Button("❌ Cancel", cancelCallback)
                 ]
             ]
         };
