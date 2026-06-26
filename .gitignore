@@ -1,1 +1,65 @@
+# Secrets / environment
 .env
+.env.*
+!.env.example
+*.secret
+*.secrets.json
+
+# .NET build output
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Rider
+_ReSharper*/
+*.DotSettings.user
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+project.lock.json
+project.assets.json
+
+# Logs
+*.log
+logs/
+*.trace
+
+# Test / coverage
+TestResults/
+coverage/
+coverage.xml
+coverage.cobertura.xml
+*.coverage
+*.coveragexml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker / local compose overrides
+docker-compose.override.yml
+compose.override.yml
+
+# Local runtime data
+downloads/
+temp/
+tmp/
