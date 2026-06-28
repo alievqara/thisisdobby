@@ -1,8 +1,11 @@
 ﻿using DobbyBot.Worker.Options;
+using DobbyBot.Worker.TextRouting;
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-
+using System.Net;
+using System.Net.Http.Json;
 namespace DobbyBot.Worker.Bot;
 
 public sealed class TelegramGateway
@@ -10,41 +13,57 @@ public sealed class TelegramGateway
     private readonly HttpClient _httpClient;
     private readonly DobbyBotOptions _options;
     private readonly ILogger<TelegramGateway> _logger;
+    private readonly ITextMessageRouter _textMessageRouter;
 
     public TelegramGateway(
         HttpClient httpClient,
         IOptions<DobbyBotOptions> options,
+        ITextMessageRouter textMessageRouter,
         ILogger<TelegramGateway> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _logger = logger;
+        _textMessageRouter = textMessageRouter;
     }
 
-    public async Task<IReadOnlyList<TelegramUpdate>> GetUpdatesAsync(
-        long offset,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<TelegramUpdate>> GetUpdatesAsync(
+    long offset,
+    CancellationToken cancellationToken)
     {
         var url =
-            $"https://api.telegram.org/bot{_options.Token}/getUpdates" +
-            $"?timeout=25&offset={offset}" +
-            $"&allowed_updates=%5B%22message%22,%22callback_query%22%5D";
+            $"{BuildTelegramApiUrl("getUpdates")}?timeout=25&offset={offset}&allowed_updates=[\"message\",\"callback_query\"]";
 
-        try
+        using var response = await _httpClient.GetAsync(
+            url,
+            cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            var response =
-                await _httpClient.GetFromJsonAsync<TelegramApiResponse<List<TelegramUpdate>>>(
-                    url,
-                    cancellationToken);
-
-            return response?.Result ?? [];
+            throw new HttpRequestException(
+                "Telegram bot token is unauthorized.",
+                null,
+                HttpStatusCode.Unauthorized);
         }
-        catch (Exception ex)
+
+        if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError(ex, "Failed to get Telegram updates.");
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            _logger.LogWarning(
+                "Failed to get Telegram updates. StatusCode: {StatusCode}, Response: {Response}",
+                response.StatusCode,
+                responseBody);
+
             return [];
         }
+
+        var result = await response.Content.ReadFromJsonAsync<TelegramApiResponse<List<TelegramUpdate>>>(
+            cancellationToken);
+
+        return result?.Result ?? [];
     }
+    
 
     public async Task<TelegramMessage?> SendMessageAsync(
      long chatId,
@@ -89,6 +108,38 @@ public sealed class TelegramGateway
             _logger.LogError(ex, "Telegram sendMessage failed.");
             return null;
         }
+    }
+
+    private string BuildTelegramApiUrl(string methodName)
+    {
+        return $"https://api.telegram.org/bot{_options.Token}/{methodName}";
+    }
+
+    public async Task<bool> SetMyCommandsAsync(
+        IReadOnlyCollection<TelegramBotCommand> commands,
+        CancellationToken cancellationToken)
+    {
+        using var response = await _httpClient.PostAsJsonAsync(
+            BuildTelegramApiUrl("setMyCommands"),
+            new
+            {
+                commands
+            },
+            cancellationToken);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return true;
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        _logger.LogWarning(
+            "Failed to set Telegram bot commands. StatusCode: {StatusCode}, Response: {Response}",
+            response.StatusCode,
+            responseBody);
+
+        return false;
     }
 
     public async Task<bool> EditMessageTextAsync(

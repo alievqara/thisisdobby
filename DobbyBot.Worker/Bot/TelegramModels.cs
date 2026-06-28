@@ -11,6 +11,13 @@ public sealed class TelegramApiResponse<T>
     public T? Result { get; init; }
 }
 
+public sealed class TelegramBotCommand
+{
+    public string Command { get; init; } = string.Empty;
+
+    public string Description { get; init; } = string.Empty;
+}
+
 public sealed class TelegramUpdate
 {
     [JsonPropertyName("update_id")]

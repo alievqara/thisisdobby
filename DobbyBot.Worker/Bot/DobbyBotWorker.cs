@@ -3,7 +3,9 @@ using DobbyBot.Worker.Menus;
 using DobbyBot.Worker.Options;
 using DobbyBot.Worker.Security;
 using DobbyBot.Worker.State;
+using DobbyBot.Worker.TextRouting;
 using Microsoft.Extensions.Options;
+using System.Net;
 
 namespace DobbyBot.Worker.Bot;
 
@@ -11,6 +13,7 @@ public sealed class DobbyBotWorker : BackgroundService
 {
     private readonly TelegramGateway _telegramGateway;
     private readonly CommandRouter _commandRouter;
+    private readonly ITextMessageRouter _textMessageRouter;
     private readonly IAdminGuard _adminGuard;
     private readonly IUserStateService _userStateService;
     private readonly DobbyBotOptions _options;
@@ -19,6 +22,7 @@ public sealed class DobbyBotWorker : BackgroundService
     public DobbyBotWorker(
         TelegramGateway telegramGateway,
         CommandRouter commandRouter,
+        ITextMessageRouter textMessageRouter,
         IAdminGuard adminGuard,
         IUserStateService userStateService,
         IOptions<DobbyBotOptions> options,
@@ -26,6 +30,7 @@ public sealed class DobbyBotWorker : BackgroundService
     {
         _telegramGateway = telegramGateway;
         _commandRouter = commandRouter;
+        _textMessageRouter = textMessageRouter;
         _adminGuard = adminGuard;
         _userStateService = userStateService;
         _options = options.Value;
@@ -35,6 +40,8 @@ public sealed class DobbyBotWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         ValidateOptions();
+
+        await RegisterBotCommandsAsync(stoppingToken);
 
         long offset = 0;
 
@@ -48,7 +55,9 @@ public sealed class DobbyBotWorker : BackgroundService
 
                 foreach (var update in updates)
                 {
-                    offset = Math.Max(offset, update.UpdateId + 1);
+                    offset = Math.Max(
+                        offset,
+                        update.UpdateId + 1);
 
                     await HandleUpdateSafelyAsync(
                         update,
@@ -58,6 +67,14 @@ public sealed class DobbyBotWorker : BackgroundService
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
                 // Normal shutdown.
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                _logger.LogCritical(
+                    ex,
+                    "Telegram bot token is unauthorized. Check DobbyBot__Token. Polling stopped.");
+
+                return;
             }
             catch (Exception ex)
             {
@@ -69,6 +86,46 @@ public sealed class DobbyBotWorker : BackgroundService
                     TimeSpan.FromSeconds(5),
                     stoppingToken);
             }
+        }
+    }
+
+    private async Task RegisterBotCommandsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var commands = new[]
+            {
+            new TelegramBotCommand
+            {
+                Command = "menu",
+                Description = "Open Dobby menu"
+            },
+            new TelegramBotCommand
+            {
+                Command = "status",
+                Description = "Show server status"
+            },
+            new TelegramBotCommand
+            {
+                Command = "help",
+                Description = "Show help"
+            }
+        };
+
+            var registered = await _telegramGateway.SetMyCommandsAsync(
+                commands,
+                cancellationToken);
+
+            if (!registered)
+            {
+                _logger.LogWarning("Telegram bot commands were not registered.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to register Telegram bot commands. Bot will continue without command menu.");
         }
     }
 
@@ -142,6 +199,29 @@ public sealed class DobbyBotWorker : BackgroundService
             return;
         }
 
+        if (_textMessageRouter.IsCommand(message.Text))
+        {
+            await HandleCommandMessageAsync(
+                message,
+                cancellationToken);
+
+            return;
+        }
+
+        await HandlePlainTextMessageAsync(
+            message,
+            cancellationToken);
+    }
+
+    private async Task HandleCommandMessageAsync(
+        TelegramMessage message,
+        CancellationToken cancellationToken)
+    {
+        if (message.From is null || message.Text is null)
+        {
+            return;
+        }
+
         BotResponse response;
 
         try
@@ -155,7 +235,7 @@ public sealed class DobbyBotWorker : BackgroundService
         {
             _logger.LogError(
                 ex,
-                "Failed to handle text message. Text: {Text}",
+                "Failed to handle command message. Text: {Text}",
                 message.Text);
 
             response = new BotResponse(
@@ -175,6 +255,53 @@ public sealed class DobbyBotWorker : BackgroundService
         await TryDeleteUserMessageAsync(
             message,
             cancellationToken);
+    }
+
+    private async Task HandlePlainTextMessageAsync(
+        TelegramMessage message,
+        CancellationToken cancellationToken)
+    {
+        if (message.From is null || message.Text is null)
+        {
+            return;
+        }
+
+        await DeleteActiveMenuIfExistsAsync(
+            message.From.Id,
+            message.Chat.Id,
+            cancellationToken);
+
+        await _telegramGateway.SendMessageAsync(
+            message.Chat.Id,
+            "🤖 Task qəbul edildi. Claude Code işləyir...",
+            null,
+            cancellationToken);
+
+        try
+        {
+            var report = await _textMessageRouter.HandlePlainTextAsync(
+                message.From.Id,
+                message.Text,
+                cancellationToken);
+
+            await _telegramGateway.SendMessageAsync(
+                message.Chat.Id,
+                report,
+                null,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to handle AI dev task.");
+
+            await _telegramGateway.SendMessageAsync(
+                message.Chat.Id,
+                "❌ AI task işlənərkən xəta baş verdi.",
+                null,
+                cancellationToken);
+        }
     }
 
     private async Task HandleCallbackQueryAsync(
@@ -395,6 +522,26 @@ public sealed class DobbyBotWorker : BackgroundService
                 telegramUserId,
                 sentMessage.MessageId);
         }
+    }
+
+    private async Task DeleteActiveMenuIfExistsAsync(
+        long telegramUserId,
+        long chatId,
+        CancellationToken cancellationToken)
+    {
+        var state = _userStateService.Get(telegramUserId);
+
+        if (state.MenuMessageId is null)
+        {
+            return;
+        }
+
+        await _telegramGateway.DeleteMessageAsync(
+            chatId,
+            state.MenuMessageId.Value,
+            cancellationToken);
+
+        _userStateService.ClearMenuMessageId(telegramUserId);
     }
 
     private async Task TryDeleteUserMessageAsync(
