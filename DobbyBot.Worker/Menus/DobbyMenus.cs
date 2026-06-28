@@ -27,11 +27,7 @@ public static class DobbyMenus
                     Button("📥 Downloader", "menu:downloader")
                 ],
                 [
-                    Button("🤖 AI Assistant", "menu:ai"),
                     Button("⚙️ Settings", "menu:settings")
-                ],
-                [
-                    Button("❓ Help", "help")
                 ]
             ]
         };
@@ -55,9 +51,6 @@ public static class DobbyMenus
                     Button("🧯 Failed Services", "server:failed-services")
                 ],
                 [
-                    Button("🔁 Reboot Request", "server:reboot-request")
-                ],
-                [
                     Button("⬅️ Back", "menu:main")
                 ]
             ]
@@ -78,8 +71,7 @@ public static class DobbyMenus
                     Button("❌ Failed / Exited", "containers:failed")
                 ],
                 [
-                    Button("📜 Logs", "containers:logs"),
-                    Button("🔄 Restart", "containers:restart")
+                    Button("📜 Logs", "containers:logs")
                 ],
                 [
                     Button("⬅️ Back", "menu:main")
@@ -105,9 +97,6 @@ public static class DobbyMenus
                     Button("🥊 CombatFight", "apps:combatfight")
                 ],
                 [
-                    Button("➕ Add App", "apps:add")
-                ],
-                [
                     Button("⬅️ Back", "menu:main")
                 ]
             ]
@@ -125,11 +114,6 @@ public static class DobbyMenus
                     Button("📜 Logs", $"app:{appKey}:logs")
                 ],
                 [
-                    Button("🔄 Restart", $"app:{appKey}:restart-request"),
-                    Button("⬆️ Update", $"app:{appKey}:update-request")
-                ],
-                [
-                    Button("💾 Backup DB", $"app:{appKey}:backup-db-request"),
                     Button("🧪 Healthcheck", $"app:{appKey}:healthcheck")
                 ],
                 [
@@ -168,7 +152,7 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                    Button("🌍 NPM Status", "proxy:npm-status")
+                    Button("🌍 Proxy Status", "proxy:npm-status")
                 ],
                 [
                     Button("🔐 SSL Certificates", "proxy:ssl"),
@@ -191,13 +175,10 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                    Button("💚 Uptime Kuma", "monitoring:kuma")
+                    Button("📈 Health Summary", "monitoring:summary")
                 ],
                 [
-                    Button("📈 Health Summary", "monitoring:summary"),
-                    Button("🚨 Alerts", "monitoring:alerts")
-                ],
-                [
+                    Button("🚨 Alerts", "monitoring:alerts"),
                     Button("🧾 Recent Incidents", "monitoring:incidents")
                 ],
                 [
@@ -213,15 +194,6 @@ public static class DobbyMenus
         {
             InlineKeyboard =
             [
-                [
-                    Button("📦 Backup Planzy DB", "backup:planzy-db-request")
-                ],
-                [
-                    Button("📦 Backup GoLotto DB", "backup:golotto-db-request")
-                ],
-                [
-                    Button("📦 Backup Dobby Config", "backup:dobby-config-request")
-                ],
                 [
                     Button("🗂 Backup List", "backup:list"),
                     Button("🧪 Verify Backup", "backup:verify")
@@ -268,29 +240,6 @@ public static class DobbyMenus
                 ],
                 [
                     Button("Cancel", "downloader:cancel")
-                ]
-            ]
-        };
-    }
-
-    public static TelegramInlineKeyboardMarkup AiMenu()
-    {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🧠 Ask Dobby", "ai:ask")
-                ],
-                [
-                    Button("📋 Explain Logs", "ai:explain-logs"),
-                    Button("🧪 Diagnose Error", "ai:diagnose")
-                ],
-                [
-                    Button("🛠 Suggest Fix", "ai:suggest-fix")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
                 ]
             ]
         };
