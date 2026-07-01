@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using DobbyBot.Worker.Options;
@@ -38,9 +39,15 @@ Qaydalar:
         DevTaskRequest request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Text))
+        var stopwatch = Stopwatch.StartNew();
+
+        if (string.IsNullOrWhiteSpace(request.Message))
         {
-            return DevTaskResult.Failed("Sual boşdur.");
+            stopwatch.Stop();
+
+            return Fail(
+                "Sual boşdur.",
+                stopwatch.Elapsed);
         }
 
         var prompt = BuildUserPrompt(request);
@@ -70,13 +77,16 @@ Qaydalar:
 
             if (!response.IsSuccessStatusCode)
             {
+                stopwatch.Stop();
+
                 _logger.LogWarning(
                     "Ollama returned non-success status. StatusCode: {StatusCode}, Body: {Body}",
                     response.StatusCode,
                     raw);
 
-                return DevTaskResult.Failed(
-                    "Local AI cavab verə bilmədi. Ollama servisində problem ola bilər.");
+                return Fail(
+                    "Local AI cavab verə bilmədi. Ollama servisində problem ola bilər.",
+                    stopwatch.Elapsed);
             }
 
             var result = await response.Content.ReadFromJsonAsync<OllamaChatResponse>(
@@ -86,33 +96,51 @@ Qaydalar:
 
             if (string.IsNullOrWhiteSpace(content))
             {
-                return DevTaskResult.Failed("Local AI boş cavab qaytardı.");
+                stopwatch.Stop();
+
+                return Fail(
+                    "Local AI boş cavab qaytardı.",
+                    stopwatch.Elapsed);
             }
 
             var cleaned = CleanThinkingText(content);
+            var output = TrimToMaxOutput(cleaned);
 
-            return DevTaskResult.Success(TrimToMaxOutput(cleaned));
+            stopwatch.Stop();
+
+            return Success(
+                output,
+                stopwatch.Elapsed);
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
+            stopwatch.Stop();
+
             _logger.LogWarning(ex, "Ollama request timed out.");
 
-            return DevTaskResult.Failed(
-                "Local AI gec cavab verdi. Model server üçün ağır ola bilər.");
+            return Fail(
+                "Local AI gec cavab verdi. Model server üçün ağır ola bilər.",
+                stopwatch.Elapsed);
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.RequestTimeout)
         {
+            stopwatch.Stop();
+
             _logger.LogWarning(ex, "Ollama request timeout.");
 
-            return DevTaskResult.Failed(
-                "Local AI gec cavab verdi. Model server üçün ağır ola bilər.");
+            return Fail(
+                "Local AI gec cavab verdi. Model server üçün ağır ola bilər.",
+                stopwatch.Elapsed);
         }
         catch (Exception ex)
         {
+            stopwatch.Stop();
+
             _logger.LogError(ex, "Unexpected Ollama error.");
 
-            return DevTaskResult.Failed(
-                "Local AI ilə əlaqə zamanı xəta baş verdi.");
+            return Fail(
+                "Local AI ilə əlaqə zamanı xəta baş verdi.",
+                stopwatch.Elapsed);
         }
     }
 
@@ -123,8 +151,32 @@ Telegram user id:
 {request.TelegramUserId}
 
 User message:
-{request.Text}
+{request.Message}
 """;
+    }
+
+    private DevTaskResult Success(
+        string output,
+        TimeSpan duration)
+    {
+        return new DevTaskResult(
+            IsSuccess: true,
+            Summary: "Local AI cavab verdi.",
+            Output: output,
+            Error: string.Empty,
+            Duration: duration);
+    }
+
+    private static DevTaskResult Fail(
+        string error,
+        TimeSpan duration)
+    {
+        return new DevTaskResult(
+            IsSuccess: false,
+            Summary: "Local AI xətası.",
+            Output: string.Empty,
+            Error: error,
+            Duration: duration);
     }
 
     private string TrimToMaxOutput(string value)
@@ -134,14 +186,16 @@ User message:
             return "Local AI boş cavab qaytardı.";
         }
 
+        var cleaned = value.Trim();
+
         if (_options.MaxOutputChars <= 0)
         {
-            return value.Trim();
+            return cleaned;
         }
 
-        return value.Length <= _options.MaxOutputChars
-            ? value.Trim()
-            : value[.._options.MaxOutputChars].Trim() + "\n\n...cavab qısaldıldı.";
+        return cleaned.Length <= _options.MaxOutputChars
+            ? cleaned
+            : cleaned[.._options.MaxOutputChars].Trim() + "\n\n...cavab qısaldıldı.";
     }
 
     private static string CleanThinkingText(string value)
