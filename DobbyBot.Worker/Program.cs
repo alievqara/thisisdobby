@@ -1,4 +1,3 @@
-using DotNetEnv;
 using DobbyBot.Worker.Bot;
 using DobbyBot.Worker.Commands;
 using DobbyBot.Worker.Execution;
@@ -7,10 +6,12 @@ using DobbyBot.Worker.Modules.Downloader;
 using DobbyBot.Worker.Options;
 using DobbyBot.Worker.Security;
 using DobbyBot.Worker.Services;
-using DobbyBot.Worker.State;
-using DobbyBot.Worker.TextRouting;
 using DobbyBot.Worker.Services.Docker;
 using DobbyBot.Worker.Services.SystemPower;
+using DobbyBot.Worker.State;
+using DobbyBot.Worker.TextRouting;
+using DotNetEnv;
+using Microsoft.Extensions.Options;
 
 Env.TraversePath().Load();
 
@@ -36,11 +37,19 @@ builder.Services.AddSingleton<IUserStateService, InMemoryUserStateService>();
 builder.Services.AddSingleton<ITextMessageRouter, TextMessageRouter>();
 
 builder.Services.AddSingleton<IDevTaskService, DevTaskService>();
-builder.Services.AddSingleton<IAgentRunnerService, ClaudeCodeRunnerService>();
 builder.Services.AddSingleton<ITaskReportFormatter, TaskReportFormatter>();
 
 builder.Services.AddSingleton<IDockerService, DockerService>();
 builder.Services.AddSingleton<ISystemPowerService, SystemPowerService>();
+builder.Services.AddHttpClient<IAgentRunnerService, OllamaAgentRunnerService>((serviceProvider, httpClient) =>
+{
+    var options = serviceProvider
+        .GetRequiredService<IOptions<AiTaskOptions>>()
+        .Value;
+
+    httpClient.BaseAddress = new Uri(options.OllamaBaseUrl.TrimEnd('/'));
+    httpClient.Timeout = TimeSpan.FromSeconds(options.OllamaTimeoutSeconds);
+});
 
 
 builder.Services.AddSingleton<CommandRouter>();
