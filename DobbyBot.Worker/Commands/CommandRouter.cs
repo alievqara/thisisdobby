@@ -179,7 +179,8 @@ Future:
             "app:dobby:logs" =>
                 new BotResponse(
                     await _systemPowerService.GetDobbyLogsAsync(cancellationToken),
-                    DobbyMenus.DobbyAppMenu()),
+                    DobbyMenus.DobbyAppMenu(),
+                    SendAsNewMessage: true),
 
             "app:dobby:healthcheck" =>
                 new BotResponse(
@@ -197,7 +198,10 @@ Future:
 
             _ when callbackData.EndsWith(":logs", StringComparison.OrdinalIgnoreCase) &&
                    callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(callbackData, "📜 Logs"),
+                AppOperationPlaceholder(
+                    callbackData,
+                    "📜 Logs",
+                    sendAsNewMessage: true),
 
             _ when callbackData.EndsWith(":healthcheck", StringComparison.OrdinalIgnoreCase) &&
                    callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
@@ -336,7 +340,8 @@ Bu əməliyyat serveri söndürəcək.
             "settings:dobby-logs" =>
                 new BotResponse(
                     await _systemPowerService.GetDobbyLogsAsync(cancellationToken),
-                    DobbyMenus.SettingsMenu()),
+                    DobbyMenus.SettingsMenu(),
+                    SendAsNewMessage: true),
 
             "settings:runtime" =>
                 new BotResponse(
@@ -376,8 +381,14 @@ Command tanınmadı.
         string callbackData,
         CancellationToken cancellationToken)
     {
-        var groupKey = callbackData.Replace("docker:group:", "", StringComparison.OrdinalIgnoreCase);
-        var group = await _dockerService.GetGroupAsync(groupKey, cancellationToken);
+        var groupKey = callbackData.Replace(
+            "docker:group:",
+            "",
+            StringComparison.OrdinalIgnoreCase);
+
+        var group = await _dockerService.GetGroupAsync(
+            groupKey,
+            cancellationToken);
 
         if (group is null)
         {
@@ -402,7 +413,10 @@ Command tanınmadı.
         {
             foreach (var container in group.Containers.Take(20))
             {
-                var icon = IsRunning(container) ? "🟢" : "🔴";
+                var icon = IsRunning(container)
+                    ? "🟢"
+                    : "🔴";
+
                 text.AppendLine($"{icon} {container.Name}");
             }
         }
@@ -416,7 +430,9 @@ Command tanınmadı.
         string callbackData,
         CancellationToken cancellationToken)
     {
-        var parts = callbackData.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var parts = callbackData.Split(
+            ':',
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         if (parts.Length < 3)
         {
@@ -428,8 +444,14 @@ Command tanınmadı.
         if (parts.Length >= 4 &&
             parts[3].Equals("logs", StringComparison.OrdinalIgnoreCase))
         {
-            var details = await _dockerService.GetContainerDetailsAsync(containerId, cancellationToken);
-            var logs = await _dockerService.GetContainerLogsAsync(containerId, 80, cancellationToken);
+            var details = await _dockerService.GetContainerDetailsAsync(
+                containerId,
+                cancellationToken);
+
+            var logs = await _dockerService.GetContainerLogsAsync(
+                containerId,
+                80,
+                cancellationToken);
 
             return new BotResponse(
                 $"""
@@ -439,14 +461,20 @@ Command tanınmadı.
 """,
                 details is null
                     ? DobbyMenus.MainMenu()
-                    : DobbyMenus.DockerContainerMenu(containerId, details.Container.GroupKey));
+                    : DobbyMenus.DockerContainerMenu(containerId, details.Container.GroupKey),
+                SendAsNewMessage: true);
         }
 
         if (parts.Length >= 4 &&
             parts[3].Equals("inspect", StringComparison.OrdinalIgnoreCase))
         {
-            var details = await _dockerService.GetContainerDetailsAsync(containerId, cancellationToken);
-            var inspect = await _dockerService.GetContainerInspectSummaryAsync(containerId, cancellationToken);
+            var details = await _dockerService.GetContainerDetailsAsync(
+                containerId,
+                cancellationToken);
+
+            var inspect = await _dockerService.GetContainerInspectSummaryAsync(
+                containerId,
+                cancellationToken);
 
             return new BotResponse(
                 inspect,
@@ -459,7 +487,9 @@ Command tanınmadı.
             ? DockerGroupKey.Normalize(parts[3])
             : DockerGroupKey.Other;
 
-        var containerDetails = await _dockerService.GetContainerDetailsAsync(containerId, cancellationToken);
+        var containerDetails = await _dockerService.GetContainerDetailsAsync(
+            containerId,
+            cancellationToken);
 
         if (containerDetails is null)
         {
@@ -537,7 +567,8 @@ Block IO:
             "/logs" when parts.Length == 2 =>
                 new BotResponse(
                     await _serviceControlService.LogsAsync(parts[1], cancellationToken),
-                    DobbyMenus.MainMenu()),
+                    DobbyMenus.MainMenu(),
+                    SendAsNewMessage: true),
 
             _ => new BotResponse(
                 """
@@ -759,7 +790,8 @@ Hazırda:
 
     private static BotResponse AppOperationPlaceholder(
         string callbackData,
-        string operationTitle)
+        string operationTitle,
+        bool sendAsNewMessage = false)
     {
         var appKey = ExtractAppKey(callbackData);
 
@@ -772,7 +804,8 @@ App:
 
 Real app operation runner hələ qoşulmayıb.
 """,
-            DobbyMenus.AppDetailsMenu(appKey));
+            DobbyMenus.AppDetailsMenu(appKey),
+            SendAsNewMessage: sendAsNewMessage);
     }
 
     private static string ExtractAppKey(string callbackData)
@@ -824,6 +857,8 @@ Real app operation runner hələ qoşulmayıb.
 /memory
 /disk
 /load
+/ai sual
+/ask sual
 /logs service-name
 /restart service-name
 """,
