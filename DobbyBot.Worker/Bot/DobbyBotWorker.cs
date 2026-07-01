@@ -3,8 +3,6 @@ using DobbyBot.Worker.Commands;
 using DobbyBot.Worker.Options;
 using DobbyBot.Worker.Security;
 using DobbyBot.Worker.Services.Ai;
-using DobbyBot.Worker.State;
-using DobbyBot.Worker.TextRouting;
 using Microsoft.Extensions.Options;
 
 namespace DobbyBot.Worker.Bot;
@@ -15,8 +13,6 @@ public sealed class DobbyBotWorker : BackgroundService
     private readonly TelegramGateway _telegramGateway;
     private readonly CommandRouter _commandRouter;
     private readonly IAdminGuard _adminGuard;
-    private readonly IUserStateService _userStateService;
-    private readonly ITextMessageRouter _textMessageRouter;
     private readonly ILocalAiService _localAiService;
     private readonly DobbyBotOptions _options;
 
@@ -25,8 +21,6 @@ public sealed class DobbyBotWorker : BackgroundService
         TelegramGateway telegramGateway,
         CommandRouter commandRouter,
         IAdminGuard adminGuard,
-        IUserStateService userStateService,
-        ITextMessageRouter textMessageRouter,
         ILocalAiService localAiService,
         IOptions<DobbyBotOptions> options)
     {
@@ -34,8 +28,6 @@ public sealed class DobbyBotWorker : BackgroundService
         _telegramGateway = telegramGateway;
         _commandRouter = commandRouter;
         _adminGuard = adminGuard;
-        _userStateService = userStateService;
-        _textMessageRouter = textMessageRouter;
         _localAiService = localAiService;
         _options = options.Value;
     }
@@ -97,32 +89,7 @@ public sealed class DobbyBotWorker : BackgroundService
                 new TelegramBotCommand
                 {
                     Command = "menu",
-                    Description = "Open menu"
-                },
-                new TelegramBotCommand
-                {
-                    Command = "status",
-                    Description = "HomeLab status"
-                },
-                new TelegramBotCommand
-                {
-                    Command = "docker",
-                    Description = "Docker groups"
-                },
-                new TelegramBotCommand
-                {
-                    Command = "ai",
-                    Description = "Ask local AI"
-                },
-                new TelegramBotCommand
-                {
-                    Command = "ask",
-                    Description = "Ask local AI"
-                },
-                new TelegramBotCommand
-                {
-                    Command = "help",
-                    Description = "Help"
+                    Description = "Open Dobby menu"
                 }
             };
 
@@ -189,46 +156,34 @@ public sealed class DobbyBotWorker : BackgroundService
             return;
         }
 
-        if (IsLocalAiCommand(message.Text))
-        {
-            await HandleLocalAiMessageAsync(
-                message.Chat.Id,
-                message.MessageId,
-                message.Text,
-                cancellationToken);
+        var text = message.Text.Trim();
 
-            return;
-        }
-
-        if (_textMessageRouter.IsCommand(message.Text))
+        if (IsMenuCommand(text))
         {
-            await HandleCommandMessageAsync(
+            await HandleMenuCommandAsync(
                 telegramUserId.Value,
                 message.Chat.Id,
                 message.MessageId,
-                message.Text,
                 cancellationToken);
 
             return;
         }
 
-        await HandlePlainTextMessageAsync(
-            telegramUserId.Value,
+        await HandleLocalAiMessageAsync(
             message.Chat.Id,
-            message.Text,
+            text,
             cancellationToken);
     }
 
-    private async Task HandleCommandMessageAsync(
+    private async Task HandleMenuCommandAsync(
         long telegramUserId,
         long chatId,
         long messageId,
-        string text,
         CancellationToken cancellationToken)
     {
         var response = await _commandRouter.HandleAsync(
             telegramUserId,
-            text,
+            "/menu",
             cancellationToken);
 
         await _telegramGateway.SendMessageAsync(
@@ -243,49 +198,19 @@ public sealed class DobbyBotWorker : BackgroundService
             cancellationToken);
     }
 
-    private async Task HandlePlainTextMessageAsync(
-        long telegramUserId,
-        long chatId,
-        string text,
-        CancellationToken cancellationToken)
-    {
-        await _telegramGateway.SendMessageAsync(
-            chatId,
-            "🤖 Task qəbul edildi. Claude Code işləyir...",
-            null,
-            cancellationToken);
-
-        var responseText = await _textMessageRouter.HandlePlainTextAsync(
-            telegramUserId,
-            text,
-            cancellationToken);
-
-        await _telegramGateway.SendMessageAsync(
-            chatId,
-            responseText,
-            null,
-            cancellationToken);
-    }
-
     private async Task HandleLocalAiMessageAsync(
         long chatId,
-        long messageId,
         string text,
         CancellationToken cancellationToken)
     {
-        var question = ExtractLocalAiQuestion(text);
+        var question = NormalizeAiQuestion(text);
 
         if (string.IsNullOrWhiteSpace(question))
         {
             await _telegramGateway.SendMessageAsync(
                 chatId,
-                "Sual yaz: /ai Docker nedir?",
+                "Sual yaz.",
                 null,
-                cancellationToken);
-
-            await TryDeleteMessageAsync(
-                chatId,
-                messageId,
                 cancellationToken);
 
             return;
@@ -309,11 +234,6 @@ public sealed class DobbyBotWorker : BackgroundService
                 null,
                 cancellationToken);
         }
-
-        await TryDeleteMessageAsync(
-            chatId,
-            messageId,
-            cancellationToken);
     }
 
     private async Task HandleCallbackQueryAsync(
@@ -409,31 +329,37 @@ public sealed class DobbyBotWorker : BackgroundService
         }
     }
 
-    private static bool IsLocalAiCommand(string text)
+    private static bool IsMenuCommand(string text)
     {
-        return text.StartsWith("/ai", StringComparison.OrdinalIgnoreCase) ||
-               text.StartsWith("/ask", StringComparison.OrdinalIgnoreCase);
+        return text.Equals("/menu", StringComparison.OrdinalIgnoreCase) ||
+               text.Equals("/start", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string ExtractLocalAiQuestion(string text)
+    private static string NormalizeAiQuestion(string text)
     {
         var trimmed = text.Trim();
 
-        if (trimmed.StartsWith("/ai", StringComparison.OrdinalIgnoreCase))
+        if (trimmed.StartsWith("/ai ", StringComparison.OrdinalIgnoreCase))
         {
-            return trimmed.Length <= 3
-                ? ""
-                : trimmed[3..].Trim();
+            return trimmed[4..].Trim();
         }
 
-        if (trimmed.StartsWith("/ask", StringComparison.OrdinalIgnoreCase))
+        if (trimmed.Equals("/ai", StringComparison.OrdinalIgnoreCase))
         {
-            return trimmed.Length <= 4
-                ? ""
-                : trimmed[4..].Trim();
+            return "";
         }
 
-        return "";
+        if (trimmed.StartsWith("/ask ", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed[5..].Trim();
+        }
+
+        if (trimmed.Equals("/ask", StringComparison.OrdinalIgnoreCase))
+        {
+            return "";
+        }
+
+        return trimmed;
     }
 
     private static IReadOnlyList<string> SplitTelegramMessage(
