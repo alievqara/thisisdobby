@@ -4,5 +4,4 @@ namespace DobbyBot.Worker.Commands;
 
 public sealed record BotResponse(
     string Text,
-    TelegramInlineKeyboardMarkup? ReplyMarkup = null,
-    bool SendAsNewMessage = false);
+    TelegramInlineKeyboardMarkup? ReplyMarkup = null);

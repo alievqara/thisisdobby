@@ -1,3 +1,4 @@
+using DotNetEnv;
 using DobbyBot.Worker.Bot;
 using DobbyBot.Worker.Commands;
 using DobbyBot.Worker.Execution;
@@ -6,13 +7,10 @@ using DobbyBot.Worker.Modules.Downloader;
 using DobbyBot.Worker.Options;
 using DobbyBot.Worker.Security;
 using DobbyBot.Worker.Services;
-using DobbyBot.Worker.Services.Ai;
-using DobbyBot.Worker.Services.Docker;
-using DobbyBot.Worker.Services.SystemPower;
 using DobbyBot.Worker.State;
 using DobbyBot.Worker.TextRouting;
-using DotNetEnv;
-using Microsoft.Extensions.Options;
+using DobbyBot.Worker.Services.Docker;
+using DobbyBot.Worker.Services.SystemPower;
 
 Env.TraversePath().Load();
 
@@ -23,17 +21,6 @@ builder.Services.Configure<DobbyBotOptions>(
 
 builder.Services.Configure<AiTaskOptions>(
     builder.Configuration.GetSection("AiTask"));
-builder.Services.Configure<LocalAiOptions>(
-    builder.Configuration.GetSection("LocalAi"));
-builder.Services.AddHttpClient<ILocalAiService, OllamaLocalAiService>((serviceProvider, httpClient) =>
-{
-    var options = serviceProvider
-        .GetRequiredService<IOptions<LocalAiOptions>>()
-        .Value;
-
-    httpClient.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/'));
-    httpClient.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-});
 
 builder.Services.AddHttpClient<TelegramGateway>();
 

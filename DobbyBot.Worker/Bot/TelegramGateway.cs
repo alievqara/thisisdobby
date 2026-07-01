@@ -63,22 +63,21 @@ public sealed class TelegramGateway
 
         return result?.Result ?? [];
     }
-
+    
 
     public async Task<TelegramMessage?> SendMessageAsync(
-        long chatId,
-        string text,
-        TelegramInlineKeyboardMarkup? replyMarkup,
-        CancellationToken cancellationToken)
+     long chatId,
+     string text,
+     TelegramInlineKeyboardMarkup? replyMarkup,
+     CancellationToken cancellationToken)
     {
-        var url = BuildTelegramApiUrl("sendMessage");
+        var url = $"https://api.telegram.org/bot{_options.Token}/sendMessage";
 
         var payload = new
         {
             chat_id = chatId,
             text,
-            reply_markup = replyMarkup,
-            disable_web_page_preview = true
+            reply_markup = replyMarkup
         };
 
         try
@@ -100,12 +99,7 @@ public sealed class TelegramGateway
                 return null;
             }
 
-            var result = JsonSerializer.Deserialize<TelegramApiResponse<TelegramMessage>>(
-                body,
-                new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+            var result = JsonSerializer.Deserialize<TelegramApiResponse<TelegramMessage>>(body);
 
             return result?.Result;
         }
@@ -115,8 +109,6 @@ public sealed class TelegramGateway
             return null;
         }
     }
-
-
 
     private string BuildTelegramApiUrl(string methodName)
     {
