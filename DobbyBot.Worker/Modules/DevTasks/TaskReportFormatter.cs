@@ -4,45 +4,15 @@ public sealed class TaskReportFormatter : ITaskReportFormatter
 {
     public string Format(DevTaskResult result)
     {
-        var status = result.IsSuccess
-            ? "✅ Completed"
-            : "❌ Failed";
-
-        var outputBlock = string.IsNullOrWhiteSpace(result.Output)
-            ? "No output."
-            : result.Output;
-
-        var errorBlock = string.IsNullOrWhiteSpace(result.Error)
-            ? "No error."
-            : result.Error;
-
-        return $"""
-        🤖 Dobby Dev Task
-
-        📌 Status
-        └ {status}
-
-        ⏱ Duration
-        └ {FormatDuration(result.Duration)}
-
-        🧾 Summary
-        └ {result.Summary}
-
-        📤 Output
-        {outputBlock}
-
-        ⚠️ Error
-        {errorBlock}
-        """;
-    }
-
-    private static string FormatDuration(TimeSpan duration)
-    {
-        if (duration.TotalMinutes >= 1)
+        if (result.IsSuccess)
         {
-            return $"{duration.TotalMinutes:0.0} min";
+            return string.IsNullOrWhiteSpace(result.Output)
+                ? "Boş cavab qaytardı."
+                : result.Output.Trim();
         }
 
-        return $"{duration.TotalSeconds:0.0} sec";
+        return string.IsNullOrWhiteSpace(result.Error)
+            ? "Cavab verə bilmədi."
+            : result.Error.Trim();
     }
 }

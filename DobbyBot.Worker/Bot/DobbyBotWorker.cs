@@ -273,7 +273,7 @@ public sealed class DobbyBotWorker : BackgroundService
 
         await _telegramGateway.SendMessageAsync(
             message.Chat.Id,
-            "🤖 Task qəbul edildi. Claude Code işləyir...",
+            "🤖 Düşünür...",
             null,
             cancellationToken);
 
