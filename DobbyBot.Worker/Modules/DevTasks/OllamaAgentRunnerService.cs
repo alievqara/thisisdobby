@@ -50,8 +50,6 @@ Qaydalar:
                 stopwatch.Elapsed);
         }
 
-        var prompt = BuildUserPrompt(request);
-
         var body = new OllamaChatRequest(
             Model: _options.OllamaModel,
             Stream: false,
@@ -60,7 +58,7 @@ Qaydalar:
             Messages:
             [
                 new OllamaChatMessage("system", SystemPrompt),
-                new OllamaChatMessage("user", prompt)
+                new OllamaChatMessage("user", request.Message.Trim())
             ],
             Options: new OllamaChatOptions(
                 Temperature: _options.OllamaTemperature,
@@ -103,14 +101,17 @@ Qaydalar:
                     stopwatch.Elapsed);
             }
 
-            var cleaned = CleanThinkingText(content);
-            var output = TrimToMaxOutput(cleaned);
+            var output = TrimToMaxOutput(
+                CleanThinkingText(content));
 
             stopwatch.Stop();
 
-            return Success(
-                output,
-                stopwatch.Elapsed);
+            return new DevTaskResult(
+                IsSuccess: true,
+                Summary: "Local AI cavab verdi.",
+                Output: output,
+                Error: string.Empty,
+                Duration: stopwatch.Elapsed);
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
@@ -144,30 +145,7 @@ Qaydalar:
         }
     }
 
-    private static string BuildUserPrompt(DevTaskRequest request)
-    {
-        return $"""
-Telegram user id:
-{request.TelegramUserId}
-
-User message:
-{request.Message}
-""";
-    }
-
-    private DevTaskResult Success(
-        string output,
-        TimeSpan duration)
-    {
-        return new DevTaskResult(
-            IsSuccess: true,
-            Summary: "Local AI cavab verdi.",
-            Output: output,
-            Error: string.Empty,
-            Duration: duration);
-    }
-
-    private static DevTaskResult Fail(
+    private DevTaskResult Fail(
         string error,
         TimeSpan duration)
     {
@@ -181,12 +159,9 @@ User message:
 
     private string TrimToMaxOutput(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return "Local AI boş cavab qaytardı.";
-        }
-
-        var cleaned = value.Trim();
+        var cleaned = string.IsNullOrWhiteSpace(value)
+            ? "Local AI boş cavab qaytardı."
+            : value.Trim();
 
         if (_options.MaxOutputChars <= 0)
         {

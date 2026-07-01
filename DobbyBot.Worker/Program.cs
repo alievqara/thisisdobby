@@ -37,10 +37,7 @@ builder.Services.AddSingleton<IUserStateService, InMemoryUserStateService>();
 builder.Services.AddSingleton<ITextMessageRouter, TextMessageRouter>();
 
 builder.Services.AddSingleton<IDevTaskService, DevTaskService>();
-builder.Services.AddSingleton<ITaskReportFormatter, TaskReportFormatter>();
 
-builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton<ISystemPowerService, SystemPowerService>();
 builder.Services.AddHttpClient<IAgentRunnerService, OllamaAgentRunnerService>((serviceProvider, httpClient) =>
 {
     var options = serviceProvider
@@ -51,6 +48,10 @@ builder.Services.AddHttpClient<IAgentRunnerService, OllamaAgentRunnerService>((s
     httpClient.Timeout = TimeSpan.FromSeconds(options.OllamaTimeoutSeconds);
 });
 
+builder.Services.AddSingleton<ITaskReportFormatter, TaskReportFormatter>();
+
+builder.Services.AddSingleton<IDockerService, DockerService>();
+builder.Services.AddSingleton<ISystemPowerService, SystemPowerService>();
 
 builder.Services.AddSingleton<CommandRouter>();
 
