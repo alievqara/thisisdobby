@@ -1,4 +1,5 @@
 ﻿using DobbyBot.Worker.Bot;
+using DobbyBot.Worker.Services.Docker;
 
 namespace DobbyBot.Worker.Menus;
 
@@ -11,8 +12,8 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                    Button("🖥 Server", "menu:server"),
-                    Button("🧩 Containers", "menu:containers")
+                    Button("🏠 HomeLab", "menu:homelab"),
+                    Button("🐳 Docker", "menu:docker")
                 ],
                 [
                     Button("🚀 Apps", "menu:apps"),
@@ -20,35 +21,32 @@ public static class DobbyMenus
                 ],
                 [
                     Button("🌐 Proxy & SSL", "menu:proxy"),
-                    Button("📊 Monitoring", "menu:monitoring")
+                    Button("💾 Backup", "menu:backup")
                 ],
                 [
-                    Button("💾 Backup", "menu:backup"),
-                    Button("📥 Downloader", "menu:downloader")
-                ],
-                [
+                    Button("📥 Downloader", "menu:downloader"),
                     Button("⚙️ Settings", "menu:settings")
                 ]
             ]
         };
     }
 
-    public static TelegramInlineKeyboardMarkup ServerMenu()
+    public static TelegramInlineKeyboardMarkup HomeLabMenu()
     {
         return new TelegramInlineKeyboardMarkup
         {
             InlineKeyboard =
             [
                 [
-                    Button("📊 Status", "server:status"),
-                    Button("💽 Disk", "server:disk")
+                    Button("📊 Status", "homelab:status"),
+                    Button("💽 Disk", "homelab:disk")
                 ],
                 [
-                    Button("🧠 Memory", "server:memory"),
-                    Button("🔥 CPU / Load", "server:load")
+                    Button("🧠 Memory", "homelab:memory"),
+                    Button("🔥 CPU / Load", "homelab:load")
                 ],
                 [
-                    Button("🧯 Failed Services", "server:failed-services")
+                    Button("🧯 Failed Services", "homelab:failed-services")
                 ],
                 [
                     Button("⬅️ Back", "menu:main")
@@ -57,24 +55,81 @@ public static class DobbyMenus
         };
     }
 
-    public static TelegramInlineKeyboardMarkup ContainersMenu()
+    public static TelegramInlineKeyboardMarkup DockerGroupsMenu(
+    IReadOnlyList<DockerContainerGroup> groups)
+    {
+        var rows = new List<TelegramInlineKeyboardButton[]>();
+
+        foreach (var group in groups)
+        {
+            rows.Add(
+            [
+                Button(
+                $"{group.Icon} {group.Title} ({group.Count})",
+                $"docker:group:{group.Key}")
+            ]);
+        }
+
+        rows.Add(
+        [
+            Button("⬅️ Back", "menu:main")
+        ]);
+
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard = rows.ToArray()
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup DockerGroupMenu(
+    DockerContainerGroup group)
+    {
+        var rows = new List<TelegramInlineKeyboardButton[]>();
+
+        foreach (var container in group.Containers.Take(20))
+        {
+            var icon = IsRunning(container)
+                ? "🟢"
+                : "🔴";
+
+            rows.Add(
+            [
+                Button(
+                $"{icon} {ShortName(container.Name)}",
+                $"docker:container:{container.Id}:{group.Key}")
+            ]);
+        }
+
+        rows.Add(
+        [
+            Button("⬅️ Docker", "menu:docker"),
+        Button("🏠 Home", "menu:main")
+        ]);
+
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard = rows.ToArray()
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup DockerContainerMenu(
+        string containerId,
+        string groupKey)
     {
         return new TelegramInlineKeyboardMarkup
         {
             InlineKeyboard =
             [
                 [
-                    Button("📦 All Containers", "containers:all"),
-                    Button("✅ Running", "containers:running")
+                    Button("📄 Logs", $"docker:container:{containerId}:logs"),
+                    Button("📋 Inspect", $"docker:container:{containerId}:inspect")
                 ],
                 [
-                    Button("❌ Failed / Exited", "containers:failed")
+                    Button("⬅️ Group", $"docker:group:{groupKey}"),
+                    Button("🐳 Docker", "menu:docker")
                 ],
                 [
-                    Button("📜 Logs", "containers:logs")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
+                    Button("🏠 Home", "menu:main")
                 ]
             ]
         };
@@ -91,6 +146,8 @@ public static class DobbyMenus
                 ],
                 [
                     Button("📅 Planzy", "apps:planzy"),
+                ],
+                [
                     Button("🎲 GoLotto", "apps:golotto")
                 ],
                 [
@@ -98,6 +155,28 @@ public static class DobbyMenus
                 ],
                 [
                     Button("⬅️ Back", "menu:main")
+                ]
+            ]
+        };
+    }
+
+    public static TelegramInlineKeyboardMarkup DobbyAppMenu()
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard =
+            [
+                [
+                    Button("📊 Status", "app:dobby:status"),
+                    Button("📜 Logs", "app:dobby:logs")
+                ],
+                [
+                    Button("🧪 Healthcheck", "app:dobby:healthcheck"),
+                    Button("🤖 Dobby AI", "apps:dobby-ai")
+                ],
+                [
+                    Button("⬅️ Apps", "menu:apps"),
+                    Button("🏠 Home", "menu:main")
                 ]
             ]
         };
@@ -160,26 +239,6 @@ public static class DobbyMenus
                 ],
                 [
                     Button("📡 Proxy Network", "proxy:network")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
-    }
-
-    public static TelegramInlineKeyboardMarkup MonitoringMenu()
-    {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("📈 Health Summary", "monitoring:summary")
-                ],
-                [
-                    Button("🚨 Alerts", "monitoring:alerts"),
-                    Button("🧾 Recent Incidents", "monitoring:incidents")
                 ],
                 [
                     Button("⬅️ Back", "menu:main")
@@ -252,15 +311,14 @@ public static class DobbyMenus
             InlineKeyboard =
             [
                 [
-                    Button("👤 Admin", "settings:admin"),
-                    Button("🔐 Security", "settings:security")
+                    Button("🔁 Reboot", "settings:reboot-request"),
+                    Button("⏻ Power Off", "settings:poweroff-request")
                 ],
                 [
-                    Button("🧾 Audit Logs", "settings:audit"),
-                    Button("🧠 State", "settings:state")
+                    Button("📜 Dobby Logs", "settings:dobby-logs")
                 ],
                 [
-                    Button("ℹ️ About Dobby", "settings:about")
+                    Button("🕒 Runtime / Boot Info", "settings:runtime")
                 ],
                 [
                     Button("⬅️ Back", "menu:main")
@@ -294,5 +352,23 @@ public static class DobbyMenus
             Text = text,
             CallbackData = callbackData
         };
+    }
+
+    private static bool IsRunning(DockerContainerInfo container)
+    {
+        return container.State.Equals("running", StringComparison.OrdinalIgnoreCase) ||
+               container.Status.StartsWith("Up", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ShortName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "unknown";
+        }
+
+        return value.Length <= 32
+            ? value
+            : value[..29] + "...";
     }
 }

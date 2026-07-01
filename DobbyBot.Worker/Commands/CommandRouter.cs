@@ -1,6 +1,9 @@
-﻿using DobbyBot.Worker.Menus;
+﻿using System.Text;
+using DobbyBot.Worker.Menus;
 using DobbyBot.Worker.Modules.Downloader;
 using DobbyBot.Worker.Services;
+using DobbyBot.Worker.Services.Docker;
+using DobbyBot.Worker.Services.SystemPower;
 using DobbyBot.Worker.State;
 
 namespace DobbyBot.Worker.Commands;
@@ -11,17 +14,23 @@ public sealed class CommandRouter
     private readonly IServiceControlService _serviceControlService;
     private readonly IDownloaderInputParser _downloaderInputParser;
     private readonly IUserStateService _userStateService;
+    private readonly IDockerService _dockerService;
+    private readonly ISystemPowerService _systemPowerService;
 
     public CommandRouter(
         IServerStatusService serverStatusService,
         IServiceControlService serviceControlService,
         IDownloaderInputParser downloaderInputParser,
-        IUserStateService userStateService)
+        IUserStateService userStateService,
+        IDockerService dockerService,
+        ISystemPowerService systemPowerService)
     {
         _serverStatusService = serverStatusService;
         _serviceControlService = serviceControlService;
         _downloaderInputParser = downloaderInputParser;
         _userStateService = userStateService;
+        _dockerService = dockerService;
+        _systemPowerService = systemPowerService;
     }
 
     public async Task<BotResponse> HandleAsync(
@@ -57,27 +66,25 @@ public sealed class CommandRouter
             "/status" =>
                 new BotResponse(
                     await _serverStatusService.GetStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
-            "/services" or "/containers" =>
-                new BotResponse(
-                    await _serverStatusService.GetAllContainersAsync(cancellationToken),
-                    DobbyMenus.ContainersMenu()),
+            "/docker" or "/containers" or "/services" =>
+                await DockerGroups(cancellationToken),
 
             "/memory" =>
                 new BotResponse(
                     await _serverStatusService.GetMemoryStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
             "/disk" =>
                 new BotResponse(
                     await _serverStatusService.GetDiskStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
             "/load" =>
                 new BotResponse(
                     await _serverStatusService.GetLoadStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
             _ => await HandleSlashCommand(
                 normalizedText,
@@ -93,65 +100,64 @@ public sealed class CommandRouter
         return callbackData switch
         {
             "menu:main" => ClearAndReturnMainMenu(telegramUserId),
-            "menu:server" => ServerMenu(),
-            "menu:containers" => ContainersMenu(),
+            "menu:homelab" => HomeLabMenu(),
+            "menu:docker" => await DockerGroups(cancellationToken),
             "menu:apps" => AppsMenu(),
             "menu:data" => DataLayerMenu(),
             "menu:proxy" => ProxyMenu(),
-            "menu:monitoring" => MonitoringMenu(),
             "menu:backup" => BackupMenu(),
             "menu:downloader" => DownloaderMenu(),
             "menu:settings" => SettingsMenu(),
             "help" => Help(),
 
-            "server:status" =>
+            "homelab:status" =>
                 new BotResponse(
                     await _serverStatusService.GetStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
-            "server:disk" =>
+            "homelab:disk" =>
                 new BotResponse(
                     await _serverStatusService.GetDiskStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
-            "server:memory" =>
+            "homelab:memory" =>
                 new BotResponse(
                     await _serverStatusService.GetMemoryStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
-            "server:load" =>
+            "homelab:load" =>
                 new BotResponse(
                     await _serverStatusService.GetLoadStatusAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
-            "server:failed-services" =>
+            "homelab:failed-services" =>
                 new BotResponse(
                     await _serverStatusService.GetFailedServicesAsync(cancellationToken),
-                    DobbyMenus.ServerMenu()),
+                    DobbyMenus.HomeLabMenu()),
 
-            "containers:all" =>
+            _ when callbackData.StartsWith("docker:group:", StringComparison.OrdinalIgnoreCase) =>
+                await DockerGroup(callbackData, cancellationToken),
+
+            _ when callbackData.StartsWith("docker:container:", StringComparison.OrdinalIgnoreCase) =>
+                await DockerContainer(callbackData, cancellationToken),
+
+            "apps:dobby" => DobbyAppDetails(),
+
+            "apps:dobby-ai" =>
                 new BotResponse(
-                    await _serverStatusService.GetAllContainersAsync(cancellationToken),
-                    DobbyMenus.ContainersMenu()),
+                    """
+🤖 Dobby AI
 
-            "containers:running" =>
-                new BotResponse(
-                    await _serverStatusService.GetRunningContainersAsync(cancellationToken),
-                    DobbyMenus.ContainersMenu()),
+Status:
+Not connected yet.
 
-            "containers:failed" =>
-                new BotResponse(
-                    await _serverStatusService.GetFailedContainersAsync(cancellationToken),
-                    DobbyMenus.ContainersMenu()),
-
-            "containers:logs" =>
-                new BotResponse(
-                    await _serverStatusService.GetContainerLogsSummaryAsync(cancellationToken),
-                    DobbyMenus.ContainersMenu()),
-
-            "apps:dobby" => AppDetails(
-                "thisisdobby",
-                "🧦 This is Dobby"),
+Future:
+• Claude Code
+• Ollama
+• Open WebUI
+• Local model stack
+""",
+                    DobbyMenus.DobbyAppMenu()),
 
             "apps:planzy" => AppDetails(
                 "planzy",
@@ -164,6 +170,38 @@ public sealed class CommandRouter
             "apps:combatfight" => AppDetails(
                 "combatfight",
                 "🥊 CombatFight"),
+
+            "app:dobby:status" =>
+                new BotResponse(
+                    await _systemPowerService.GetRuntimeInfoAsync(cancellationToken),
+                    DobbyMenus.DobbyAppMenu()),
+
+            "app:dobby:logs" =>
+                new BotResponse(
+                    await _systemPowerService.GetDobbyLogsAsync(cancellationToken),
+                    DobbyMenus.DobbyAppMenu()),
+
+            "app:dobby:healthcheck" =>
+                new BotResponse(
+                    """
+🧪 This is Dobby Healthcheck
+
+🟢 Bot process is responding.
+🟢 Telegram callback routing is working.
+""",
+                    DobbyMenus.DobbyAppMenu()),
+
+            _ when callbackData.EndsWith(":status", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                AppOperationPlaceholder(callbackData, "📊 Status"),
+
+            _ when callbackData.EndsWith(":logs", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                AppOperationPlaceholder(callbackData, "📜 Logs"),
+
+            _ when callbackData.EndsWith(":healthcheck", StringComparison.OrdinalIgnoreCase) &&
+                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
+                AppOperationPlaceholder(callbackData, "🧪 Healthcheck"),
 
             "data:postgres" =>
                 new BotResponse(
@@ -198,15 +236,7 @@ public sealed class CommandRouter
             "proxy:domains" =>
                 NotImplementedOperation(
                     "🧪 Check Domains",
-                    """
-                    Domain healthcheck üçün ayrıca domain registry əlavə edəcəyik.
-
-                    Gələcək:
-                    • planzy.org
-                    • alievfaig.dev
-                    • subdomain healthcheck
-                    • SSL expiry
-                    """,
+                    "Domain healthcheck üçün ayrıca domain registry əlavə edəcəyik.",
                     DobbyMenus.ProxyMenu()),
 
             "proxy:network" =>
@@ -214,23 +244,6 @@ public sealed class CommandRouter
                     "📡 Proxy Network",
                     "Docker proxy network inspector növbəti mərhələdə əlavə olunacaq.",
                     DobbyMenus.ProxyMenu()),
-
-            "monitoring:summary" =>
-                new BotResponse(
-                    await _serverStatusService.GetStatusAsync(cancellationToken),
-                    DobbyMenus.MonitoringMenu()),
-
-            "monitoring:alerts" =>
-                NotImplementedOperation(
-                    "🚨 Alerts",
-                    "Alert rules və notification history sonra əlavə olunacaq.",
-                    DobbyMenus.MonitoringMenu()),
-
-            "monitoring:incidents" =>
-                NotImplementedOperation(
-                    "🧾 Recent Incidents",
-                    "Incident history üçün persistence lazımdır. Sonra PostgreSQL və ya Redis ilə yazılacaq.",
-                    DobbyMenus.MonitoringMenu()),
 
             "backup:list" =>
                 new BotResponse(
@@ -246,15 +259,12 @@ public sealed class CommandRouter
             "downloader:telegram-file" =>
                 new BotResponse(
                     """
-                    📤 Send Telegram File
+📤 Send Telegram File
 
-                    Bot-a photo, video və ya document göndər.
+Bot-a photo, video və ya document göndər.
 
-                    Dobby onu serverdə downloads folderinə save edəcək.
-
-                    Qeyd:
-                    Bu flow ayrıca Telegram file downloader kimi tamamlanacaq.
-                    """,
+Dobby onu serverdə downloads folderinə save edəcək.
+""",
                     DobbyMenus.DownloaderMenu()),
 
             "downloader:input" => StartDownloaderInputMode(telegramUserId),
@@ -278,12 +288,10 @@ public sealed class CommandRouter
             "downloader:cleanup-request" =>
                 Confirmation(
                     """
-                    🧹 Cleanup Temp
+🧹 Cleanup Temp
 
-                    Bu əməliyyat temp/download cache təmizləyəcək.
-
-                    Real runner hələ qoşulmayıb.
-                    """,
+Bu əməliyyat temp/download cache təmizləyəcək.
+""",
                     confirmCallback: "downloader:cleanup-confirm",
                     cancelCallback: "menu:downloader"),
 
@@ -295,78 +303,213 @@ public sealed class CommandRouter
 
             "downloader:cancel" => ClearAndReturnMainMenu(telegramUserId),
 
-            "settings:admin" =>
-                new BotResponse(
+            "settings:reboot-request" =>
+                Confirmation(
                     """
-                    👤 Admin
+⚠️ Reboot server?
 
-                    Bot admin-only mode-da işləyir.
+Bu əməliyyat serveri yenidən başladacaq.
+""",
+                    confirmCallback: "settings:reboot-confirm",
+                    cancelCallback: "menu:settings"),
 
-                    Yalnız konfiqurasiya olunmuş Telegram Admin ID istifadə edə bilər.
-                    Non-admin istifadəçilər cavab almır.
-                    """,
+            "settings:reboot-confirm" =>
+                new BotResponse(
+                    await _systemPowerService.RebootAsync(cancellationToken),
                     DobbyMenus.SettingsMenu()),
 
-            "settings:security" =>
-                new BotResponse(
+            "settings:poweroff-request" =>
+                Confirmation(
                     """
-                    🔐 Security
+⚠️ Power off server?
 
-                    Prinsiplər:
-                    • Dobby root olmamalıdır
-                    • unrestricted shell yoxdur
-                    • dangerous operation confirmation istəyir
-                    • operation-lar audit olunmalıdır
-                    """,
-                    DobbyMenus.SettingsMenu()),
+Bu əməliyyat serveri söndürəcək.
+""",
+                    confirmCallback: "settings:poweroff-confirm",
+                    cancelCallback: "menu:settings"),
 
-            "settings:audit" =>
-                NotImplementedOperation(
-                    "🧾 Audit Logs",
-                    "Audit log üçün PostgreSQL persistence əlavə olunacaq.",
-                    DobbyMenus.SettingsMenu()),
-
-            "settings:state" =>
+            "settings:poweroff-confirm" =>
                 new BotResponse(
-                    """
-                    🧠 State
-
-                    Hazırda state InMemoryUserStateService ilə saxlanır.
-
-                    Bu o deməkdir:
-                    • bot restart olarsa state itir
-                    • menu message id itir
-                    • pending confirmation itir
-
-                    Production üçün Redis və ya PostgreSQL state backend lazımdır.
-                    """,
+                    await _systemPowerService.PowerOffAsync(cancellationToken),
                     DobbyMenus.SettingsMenu()),
 
-            "settings:about" =>
+            "settings:dobby-logs" =>
                 new BotResponse(
-                    BotInfo(),
+                    await _systemPowerService.GetDobbyLogsAsync(cancellationToken),
                     DobbyMenus.SettingsMenu()),
 
-            _ when callbackData.EndsWith(":status", StringComparison.OrdinalIgnoreCase) &&
-                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(callbackData, "📊 Status"),
-
-            _ when callbackData.EndsWith(":logs", StringComparison.OrdinalIgnoreCase) &&
-                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(callbackData, "📜 Logs"),
-
-            _ when callbackData.EndsWith(":healthcheck", StringComparison.OrdinalIgnoreCase) &&
-                   callbackData.StartsWith("app:", StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(callbackData, "🧪 Healthcheck"),
+            "settings:runtime" =>
+                new BotResponse(
+                    await _systemPowerService.GetRuntimeInfoAsync(cancellationToken),
+                    DobbyMenus.SettingsMenu()),
 
             _ => new BotResponse(
                 """
-                Command tanınmadı.
+Command tanınmadı.
 
-                Əsas menyuya qayıtdım.
-                """,
+Əsas menyuya qayıtdım.
+""",
                 DobbyMenus.MainMenu())
         };
+    }
+
+    private async Task<BotResponse> DockerGroups(
+        CancellationToken cancellationToken)
+    {
+        var groups = await _dockerService.GetGroupsAsync(cancellationToken);
+
+        var text = new StringBuilder();
+        text.AppendLine("🐳 Docker");
+        text.AppendLine();
+
+        foreach (var group in groups)
+        {
+            text.AppendLine($"{group.Icon} {group.Title}: {group.Count}");
+        }
+
+        return new BotResponse(
+            text.ToString().TrimEnd(),
+            DobbyMenus.DockerGroupsMenu(groups));
+    }
+
+    private async Task<BotResponse> DockerGroup(
+        string callbackData,
+        CancellationToken cancellationToken)
+    {
+        var groupKey = callbackData.Replace("docker:group:", "", StringComparison.OrdinalIgnoreCase);
+        var group = await _dockerService.GetGroupAsync(groupKey, cancellationToken);
+
+        if (group is null)
+        {
+            return new BotResponse(
+                """
+🐳 Docker
+
+⚠️ Group tapılmadı.
+""",
+                DobbyMenus.MainMenu());
+        }
+
+        var text = new StringBuilder();
+        text.AppendLine($"{group.Icon} {group.Title}");
+        text.AppendLine();
+
+        if (group.Containers.Count == 0)
+        {
+            text.AppendLine("Container yoxdur.");
+        }
+        else
+        {
+            foreach (var container in group.Containers.Take(20))
+            {
+                var icon = IsRunning(container) ? "🟢" : "🔴";
+                text.AppendLine($"{icon} {container.Name}");
+            }
+        }
+
+        return new BotResponse(
+            text.ToString().TrimEnd(),
+            DobbyMenus.DockerGroupMenu(group));
+    }
+
+    private async Task<BotResponse> DockerContainer(
+        string callbackData,
+        CancellationToken cancellationToken)
+    {
+        var parts = callbackData.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (parts.Length < 3)
+        {
+            return await DockerGroups(cancellationToken);
+        }
+
+        var containerId = parts[2];
+
+        if (parts.Length >= 4 &&
+            parts[3].Equals("logs", StringComparison.OrdinalIgnoreCase))
+        {
+            var details = await _dockerService.GetContainerDetailsAsync(containerId, cancellationToken);
+            var logs = await _dockerService.GetContainerLogsAsync(containerId, 80, cancellationToken);
+
+            return new BotResponse(
+                $"""
+📄 Logs: {details?.Container.Name ?? containerId}
+
+{logs}
+""",
+                details is null
+                    ? DobbyMenus.MainMenu()
+                    : DobbyMenus.DockerContainerMenu(containerId, details.Container.GroupKey));
+        }
+
+        if (parts.Length >= 4 &&
+            parts[3].Equals("inspect", StringComparison.OrdinalIgnoreCase))
+        {
+            var details = await _dockerService.GetContainerDetailsAsync(containerId, cancellationToken);
+            var inspect = await _dockerService.GetContainerInspectSummaryAsync(containerId, cancellationToken);
+
+            return new BotResponse(
+                inspect,
+                details is null
+                    ? DobbyMenus.MainMenu()
+                    : DobbyMenus.DockerContainerMenu(containerId, details.Container.GroupKey));
+        }
+
+        var groupKey = parts.Length >= 4
+            ? DockerGroupKey.Normalize(parts[3])
+            : DockerGroupKey.Other;
+
+        var containerDetails = await _dockerService.GetContainerDetailsAsync(containerId, cancellationToken);
+
+        if (containerDetails is null)
+        {
+            return new BotResponse(
+                """
+🐳 Docker
+
+⚠️ Container tapılmadı.
+""",
+                DobbyMenus.MainMenu());
+        }
+
+        var container = containerDetails.Container;
+        var stats = containerDetails.Stats;
+
+        var statusIcon = IsRunning(container)
+            ? "🟢"
+            : "🔴";
+
+        var text = $"""
+🐳 {container.Name}
+
+Status:
+{statusIcon} {container.Status}
+
+Image:
+{container.Image}
+
+Health:
+{container.Health ?? "unknown"}
+
+Uptime:
+{container.Uptime}
+
+CPU:
+{stats?.Cpu ?? "unknown"}
+
+RAM:
+{stats?.Memory ?? "unknown"} ({stats?.MemoryPercent ?? "unknown"})
+
+Network:
+{stats?.Network ?? "unknown"}
+
+Block IO:
+{stats?.BlockIo ?? "unknown"}
+""";
+
+        return new BotResponse(
+            text,
+            DobbyMenus.DockerContainerMenu(container.Id, groupKey));
     }
 
     private async Task<BotResponse> HandleSlashCommand(
@@ -389,19 +532,19 @@ public sealed class CommandRouter
             "/restart" when parts.Length == 2 =>
                 new BotResponse(
                     await _serviceControlService.RestartAsync(parts[1], cancellationToken),
-                    DobbyMenus.ContainersMenu()),
+                    DobbyMenus.MainMenu()),
 
             "/logs" when parts.Length == 2 =>
                 new BotResponse(
                     await _serviceControlService.LogsAsync(parts[1], cancellationToken),
-                    DobbyMenus.ContainersMenu()),
+                    DobbyMenus.MainMenu()),
 
             _ => new BotResponse(
                 """
-                Command tanınmadı.
+Command tanınmadı.
 
-                /menu yaz və ya menudan seçim et.
-                """,
+/menu yaz və ya menudan seçim et.
+""",
                 DobbyMenus.MainMenu())
         };
     }
@@ -414,21 +557,17 @@ public sealed class CommandRouter
 
         return new BotResponse(
             """
-            📥 Downloader
+📥 Downloader
 
-            Instagram və ya Telegram linki göndər.
+Instagram və ya Telegram linki göndər.
 
-            Dəstəklənən nümunələr:
-            https://www.instagram.com/p/...
-            https://www.instagram.com/reel/...
-            https://www.instagram.com/stories/username/...
-            https://t.me/channel/123
-            https://t.me/username
-            @username
-            username
-
-            Username göndərsən, Instagram və ya Telegram seçimi çıxacaq.
-            """,
+Nümunələr:
+https://www.instagram.com/p/...
+https://www.instagram.com/reel/...
+https://t.me/channel/123
+@username
+username
+""",
             DobbyMenus.DownloaderMenu());
     }
 
@@ -442,10 +581,10 @@ public sealed class CommandRouter
         {
             return new BotResponse(
                 """
-                Link və ya username tanınmadı.
+Link və ya username tanınmadı.
 
-                Instagram/TG linki və ya username göndər.
-                """,
+Instagram/TG linki və ya username göndər.
+""",
                 DobbyMenus.DownloaderMenu());
         }
 
@@ -461,10 +600,11 @@ public sealed class CommandRouter
 
             return new BotResponse(
                 $"""
-                Username tapıldı: {request.Value}
+Username tapıldı:
+{request.Value}
 
-                Bu username hansı platformadandır?
-                """,
+Bu username hansı platformadandır?
+""",
                 DobbyMenus.DownloaderPlatformSelectionMenu());
         }
 
@@ -511,15 +651,14 @@ public sealed class CommandRouter
     {
         return new BotResponse(
             $"""
-            📥 Downloader request parsed
+📥 Downloader request parsed
 
-            Source: {request.Source}
-            Type: {request.ContentType}
-            Value: {request.Value}
+Source: {request.Source}
+Type: {request.ContentType}
+Value: {request.Value}
 
-            Real download hələ qoşulmayıb.
-            Növbəti mərhələdə bu request uyğun provider-ə yönləndiriləcək.
-            """,
+Real download hələ qoşulmayıb.
+""",
             DobbyMenus.DownloaderMenu());
     }
 
@@ -532,126 +671,71 @@ public sealed class CommandRouter
     private static BotResponse MainMenu()
     {
         return new BotResponse(
-            """
-            🧦 This is Dobby
-
-            HomeLab Guardian / Telegram DevOps Assistant
-
-            Server, container, app, data layer, proxy, monitoring və backup statuslarını buradan izləyə bilərsən.
-
-            Qeyd:
-            Adi text mesajları AI task kimi qəbul olunur.
-            """,
+            "🧦 Dobby",
             DobbyMenus.MainMenu());
     }
 
-    private static BotResponse ServerMenu()
+    private static BotResponse HomeLabMenu()
     {
         return new BotResponse(
-            """
-            🖥 Server
-
-            Server səviyyəsində status, disk, memory, CPU/load və failed services yoxlamaları.
-            """,
-            DobbyMenus.ServerMenu());
-    }
-
-    private static BotResponse ContainersMenu()
-    {
-        return new BotResponse(
-            """
-            🧩 Containers
-
-            Docker container-larının statusu, running/exited siyahısı və log summary bölməsi.
-            """,
-            DobbyMenus.ContainersMenu());
+            "🏠 HomeLab",
+            DobbyMenus.HomeLabMenu());
     }
 
     private static BotResponse AppsMenu()
     {
         return new BotResponse(
-            """
-            🚀 Apps
-
-            HomeLab-da idarə etdiyimiz app-lər:
-
-            🧦 This is Dobby
-            📅 Planzy
-            🎲 GoLotto
-            🥊 CombatFight
-            """,
+            "🚀 Apps",
             DobbyMenus.AppsMenu());
     }
 
     private static BotResponse DataLayerMenu()
     {
         return new BotResponse(
-            """
-            🗄 Data Layer
-
-            Data servis və storage statusları:
-
-            🐘 PostgreSQL
-            ⚡ Redis
-            💾 Docker Volumes
-            🔐 DB Backups
-            """,
+            "🗄 Data Layer",
             DobbyMenus.DataLayerMenu());
     }
 
     private static BotResponse ProxyMenu()
     {
         return new BotResponse(
-            """
-            🌐 Proxy & SSL
-
-            Proxy, domain və SSL status bölməsi.
-            """,
+            "🌐 Proxy & SSL",
             DobbyMenus.ProxyMenu());
-    }
-
-    private static BotResponse MonitoringMenu()
-    {
-        return new BotResponse(
-            """
-            📊 Monitoring
-
-            Health summary, alerts və recent incidents bölməsi.
-            """,
-            DobbyMenus.MonitoringMenu());
     }
 
     private static BotResponse BackupMenu()
     {
         return new BotResponse(
-            """
-            💾 Backup
-
-            Backup list və verify workflow bölməsi.
-            """,
+            "💾 Backup",
             DobbyMenus.BackupMenu());
     }
 
     private static BotResponse DownloaderMenu()
     {
         return new BotResponse(
-            """
-            📥 Downloader
-
-            Telegram file, link və username parsing üçün bölmə.
-            """,
+            "📥 Downloader",
             DobbyMenus.DownloaderMenu());
     }
 
     private static BotResponse SettingsMenu()
     {
         return new BotResponse(
-            """
-            ⚙️ Settings
-
-            Admin, security, audit və state management bölməsi.
-            """,
+            "⚙️ Settings",
             DobbyMenus.SettingsMenu());
+    }
+
+    private static BotResponse DobbyAppDetails()
+    {
+        return new BotResponse(
+            """
+🧦 This is Dobby
+
+📊 Status
+📜 Logs
+🧪 Healthcheck
+🤖 Dobby AI
+""",
+            DobbyMenus.DobbyAppMenu());
     }
 
     private static BotResponse AppDetails(
@@ -660,20 +744,16 @@ public sealed class CommandRouter
     {
         return new BotResponse(
             $"""
-            {title}
+{title}
 
-            App operation panel.
+App key:
+{appKey}
 
-            App key:
-            {appKey}
-
-            Hazırda:
-            📊 Status
-            📜 Logs
-            🧪 Healthcheck
-
-            Restart/update/backup kimi dangerous operation-ları sonra controlled runner ilə qoşacağıq.
-            """,
+Hazırda:
+📊 Status
+📜 Logs
+🧪 Healthcheck
+""",
             DobbyMenus.AppDetailsMenu(appKey));
     }
 
@@ -685,12 +765,13 @@ public sealed class CommandRouter
 
         return new BotResponse(
             $"""
-            {operationTitle}
+{operationTitle}
 
-            App: {appKey}
+App:
+{appKey}
 
-            Real app operation runner hələ qoşulmayıb.
-            """,
+Real app operation runner hələ qoşulmayıb.
+""",
             DobbyMenus.AppDetailsMenu(appKey));
     }
 
@@ -724,13 +805,10 @@ public sealed class CommandRouter
     {
         return new BotResponse(
             $"""
-            {title}
+{title}
 
-            {body}
-
-            Status:
-            Hələ production runner qoşulmayıb.
-            """,
+{body}
+""",
             (dynamic)replyMarkup);
     }
 
@@ -738,56 +816,23 @@ public sealed class CommandRouter
     {
         return new BotResponse(
             """
-            🧦 This is Dobby Help
+🧦 Dobby Help
 
-            Əsas command-lar:
-            /menu
-            /status
-            /services
-            /containers
-            /memory
-            /disk
-            /load
-            /logs golotto
-            /restart golotto
-
-            AI:
-            Adi text mesajı yazanda Dobby onu AI dev task kimi qəbul edir.
-            AI üçün ayrıca menu yoxdur.
-            """,
+/menu
+/status
+/docker
+/memory
+/disk
+/load
+/logs service-name
+/restart service-name
+""",
             DobbyMenus.MainMenu());
     }
 
-    private static string BotInfo()
+    private static bool IsRunning(DockerContainerInfo container)
     {
-        return """
-        ℹ️ This is Dobby
-
-        Mode: Long polling
-        Runtime: .NET 8 Worker Service
-        Access: Admin only
-
-        Role:
-        HomeLab Guardian / Telegram DevOps Assistant
-
-        HomeLab:
-        Base path: /srv/homelab
-        Apps: /srv/homelab/apps
-        Compose: /srv/homelab/compose
-
-        Managed areas:
-        🖥 Server
-        🧩 Containers
-        🚀 Apps
-        🗄 Data Layer
-        🌐 Proxy & SSL
-        📊 Monitoring
-        💾 Backup
-        📥 Downloader
-
-        AI:
-        Plain text task mode.
-        No separate AI menu.
-        """;
+        return container.State.Equals("running", StringComparison.OrdinalIgnoreCase) ||
+               container.Status.StartsWith("Up", StringComparison.OrdinalIgnoreCase);
     }
 }

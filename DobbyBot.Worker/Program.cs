@@ -9,6 +9,8 @@ using DobbyBot.Worker.Security;
 using DobbyBot.Worker.Services;
 using DobbyBot.Worker.State;
 using DobbyBot.Worker.TextRouting;
+using DobbyBot.Worker.Services.Docker;
+using DobbyBot.Worker.Services.SystemPower;
 
 Env.TraversePath().Load();
 
@@ -36,6 +38,9 @@ builder.Services.AddSingleton<ITextMessageRouter, TextMessageRouter>();
 builder.Services.AddSingleton<IDevTaskService, DevTaskService>();
 builder.Services.AddSingleton<IAgentRunnerService, ClaudeCodeRunnerService>();
 builder.Services.AddSingleton<ITaskReportFormatter, TaskReportFormatter>();
+
+builder.Services.AddSingleton<IDockerService, DockerService>();
+builder.Services.AddSingleton<ISystemPowerService, SystemPowerService>();
 
 
 builder.Services.AddSingleton<CommandRouter>();
