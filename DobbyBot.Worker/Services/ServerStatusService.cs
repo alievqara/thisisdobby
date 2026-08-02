@@ -6,7 +6,8 @@ namespace DobbyBot.Worker.Services;
 public sealed class ServerStatusService : IServerStatusService
 {
     private const string HomeLabPath = "/srv/homelab";
-    private const string BackupPath = "/srv/homelab/backups";
+    private const string StoragePath = "/srv/storage";
+    private const string BackupPath = "/srv/storage/backups";
 
     public async Task<string> GetStatusAsync(CancellationToken cancellationToken = default)
     {
@@ -118,42 +119,79 @@ public sealed class ServerStatusService : IServerStatusService
 
     public async Task<string> GetDiskStatusAsync(CancellationToken cancellationToken = default)
     {
-        var rootDisk = await RunAsync("df", ["-h", "/"], cancellationToken);
-        var homelabDisk = await BashAsync($"df -h {HomeLabPath} 2>/dev/null | tail -n +2", cancellationToken);
-        var dockerDf = await BashAsync("docker system df 2>/dev/null", cancellationToken);
-        var backupSize = await BashAsync($"du -sh {BackupPath} 2>/dev/null | awk '{{print $1}}'", cancellationToken);
+        var rootDisk = await RunAsync(
+            "df",
+            ["-hT", "/"],
+            cancellationToken);
+
+        var storageMount = await BashAsync(
+            $"findmnt -n -o SOURCE,FSTYPE,OPTIONS {EscapeShellArg(StoragePath)} 2>/dev/null",
+            cancellationToken);
+
+        var storageDisk = await BashAsync(
+            $"df -hT {EscapeShellArg(StoragePath)} 2>/dev/null | tail -n +2",
+            cancellationToken);
+
+        var storageLabel = await BashAsync(
+            $"source=$(findmnt -n -o SOURCE {EscapeShellArg(StoragePath)} 2>/dev/null); " +
+            "test -n \"$source\" && lsblk -no LABEL \"$source\" 2>/dev/null | head -1",
+            cancellationToken);
+
+        var dockerDf = await BashAsync(
+            "docker system df 2>/dev/null",
+            cancellationToken);
+
+        var backupSize = await BashAsync(
+            $"du -sh {EscapeShellArg(BackupPath)} 2>/dev/null | awk '{{print $1}}'",
+            cancellationToken);
 
         var sb = new StringBuilder();
 
         sb.AppendLine("💽 Disk");
         sb.AppendLine();
 
-        sb.AppendLine("🧱 Root");
+        sb.AppendLine("⚡ System SSD");
+        sb.AppendLine("• Mount: /");
         sb.AppendLine($"• Usage: {ParseDisk(rootDisk)}");
         sb.AppendLine();
 
-        sb.AppendLine("🏠 HomeLab");
-        if (string.IsNullOrWhiteSpace(homelabDisk))
+        sb.AppendLine("🗄 Storage HDD");
+        sb.AppendLine($"• Mount: {StoragePath}");
+
+        if (string.IsNullOrWhiteSpace(storageDisk))
         {
-            sb.AppendLine($"• Path: {HomeLabPath}");
-            sb.AppendLine("• Status: folder tapılmadı və ya icazə yoxdur");
+            sb.AppendLine("• Status: mount tapılmadı və ya icazə yoxdur");
         }
         else
         {
-            sb.AppendLine($"• Usage: {ParseDfLine(homelabDisk)}");
+            sb.AppendLine(
+                $"• Label: {(string.IsNullOrWhiteSpace(storageLabel) ? "unknown" : Clean(storageLabel))}");
+
+            sb.AppendLine(
+                $"• Mount info: {(string.IsNullOrWhiteSpace(storageMount) ? "unknown" : Clean(storageMount))}");
+
+            sb.AppendLine($"• Usage: {ParseDfLine(storageDisk)}");
         }
 
+        sb.AppendLine();
+
+        sb.AppendLine("🏠 HomeLab");
+        sb.AppendLine($"• Path: {HomeLabPath}");
+        sb.AppendLine("• Storage: System SSD");
         sb.AppendLine();
 
         sb.AppendLine("💾 Backups");
         sb.AppendLine($"• Path: {BackupPath}");
-        sb.AppendLine($"• Size: {(string.IsNullOrWhiteSpace(backupSize) ? "unknown" : Clean(backupSize))}");
+        sb.AppendLine(
+            $"• Size: {(string.IsNullOrWhiteSpace(backupSize) ? "unknown" : Clean(backupSize))}");
         sb.AppendLine();
 
         sb.AppendLine("🐳 Docker Disk");
+
         if (string.IsNullOrWhiteSpace(dockerDf))
         {
-            sb.AppendLine("• Docker disk məlumatı yoxdur və ya icazə yoxdur.");
+            sb.AppendLine(
+                "• Docker disk məlumatı yoxdur və ya icazə yoxdur.");
         }
         else
         {

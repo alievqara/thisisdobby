@@ -744,7 +744,7 @@ public sealed class CommandRouter
     private static BotResponse MainMenu()
     {
         return new BotResponse(
-            "🧦 Dobby",
+            "🏠 HomeLab",
             DobbyMenus.MainMenu());
     }
 
