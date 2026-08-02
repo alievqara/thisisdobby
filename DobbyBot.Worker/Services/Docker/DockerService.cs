@@ -261,14 +261,18 @@ Created:
     {
         var value = $"{name} {image}".ToLowerInvariant();
 
-        if (value.Contains("dobby-postgres") ||
+        if (value.Contains("homelab-") ||
+            value.Contains("dobby-postgres") ||
             value.Contains("dobby-redis") ||
             value.Contains("dobby-portainer") ||
             value.Contains("dobby-npm") ||
             value.Contains("dobby-uptime-kuma") ||
             value.Contains("nginx-proxy-manager") ||
+            value.Contains("cloudflared") ||
             value.Contains("portainer") ||
-            value.Contains("uptime-kuma"))
+            value.Contains("uptime-kuma") ||
+            value.Contains("rabbitmq") ||
+            value.Contains("minio"))
         {
             return DockerGroupKey.HomeLab;
         }
