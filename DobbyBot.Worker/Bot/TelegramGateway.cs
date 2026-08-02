@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using DobbyBot.Worker.Options;
@@ -34,35 +34,63 @@ public sealed class TelegramGateway
         var url =
             $"{BuildTelegramApiUrl("getUpdates")}?timeout=25&offset={offset}&allowed_updates=[\"message\",\"callback_query\"]";
 
-        using var response = await _httpClient.GetAsync(
-            url,
-            cancellationToken);
+        try
+        {
+            using var response = await _httpClient.GetAsync(
+                url,
+                cancellationToken);
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                throw new HttpRequestException(
+                    "Telegram bot token is unauthorized.",
+                    inner: null,
+                    HttpStatusCode.Unauthorized);
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync(
+                    cancellationToken);
+
+                _logger.LogWarning(
+                    "Failed to get Telegram updates. StatusCode: {StatusCode}, Response: {Response}",
+                    response.StatusCode,
+                    RedactSensitiveValue(responseBody));
+
+                return [];
+            }
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<TelegramApiResponse<List<TelegramUpdate>>>(
+                        JsonOptions,
+                        cancellationToken);
+
+            return result?.Result ?? [];
+        }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (HttpRequestException ex)
+            when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {
             throw new HttpRequestException(
                 "Telegram bot token is unauthorized.",
-                null,
+                inner: null,
                 HttpStatusCode.Unauthorized);
         }
-
-        if (!response.IsSuccessStatusCode)
+        catch (Exception ex)
         {
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            _logger.LogWarning(
-                "Failed to get Telegram updates. StatusCode: {StatusCode}, Response: {Response}",
-                response.StatusCode,
-                RedactTelegramToken(responseBody));
+            LogTransportFailure(
+                "getUpdates",
+                ex,
+                LogLevel.Warning);
 
             return [];
         }
-
-        var result = await response.Content.ReadFromJsonAsync<TelegramApiResponse<List<TelegramUpdate>>>(
-            JsonOptions,
-            cancellationToken);
-
-        return result?.Result ?? [];
     }
 
     public async Task<TelegramMessage?> SendMessageAsync(
@@ -95,27 +123,38 @@ public sealed class TelegramGateway
                 payload,
                 cancellationToken);
 
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(
+                cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(
                     "Telegram sendMessage failed. StatusCode: {StatusCode}, Body: {Body}",
                     response.StatusCode,
-                    RedactTelegramToken(body));
+                    RedactSensitiveValue(body));
 
                 return null;
             }
 
-            var result = JsonSerializer.Deserialize<TelegramApiResponse<TelegramMessage>>(
-                body,
-                JsonOptions);
+            var result =
+                JsonSerializer.Deserialize<TelegramApiResponse<TelegramMessage>>(
+                    body,
+                    JsonOptions);
 
             return result?.Result;
         }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Telegram sendMessage failed.");
+            LogTransportFailure(
+                "sendMessage",
+                ex,
+                LogLevel.Error);
+
             return null;
         }
     }
@@ -143,18 +182,28 @@ public sealed class TelegramGateway
                 return true;
             }
 
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            var responseBody = await response.Content.ReadAsStringAsync(
+                cancellationToken);
 
             _logger.LogWarning(
                 "Failed to set Telegram bot commands. StatusCode: {StatusCode}, Response: {Response}",
                 response.StatusCode,
-                RedactTelegramToken(responseBody));
+                RedactSensitiveValue(responseBody));
 
             return false;
         }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to set Telegram bot commands.");
+            LogTransportFailure(
+                "setMyCommands",
+                ex,
+                LogLevel.Warning);
+
             return false;
         }
     }
@@ -190,14 +239,17 @@ public sealed class TelegramGateway
                 payload,
                 cancellationToken);
 
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(
+                cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
                 return true;
             }
 
-            if (body.Contains("message is not modified", StringComparison.OrdinalIgnoreCase))
+            if (body.Contains(
+                    "message is not modified",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -207,15 +259,21 @@ public sealed class TelegramGateway
                 chatId,
                 messageId,
                 response.StatusCode,
-                RedactTelegramToken(body));
+                RedactSensitiveValue(body));
 
             return false;
         }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(
+            LogTransportFailure(
+                "editMessageText",
                 ex,
-                "Telegram editMessageText failed. ChatId: {ChatId}, MessageId: {MessageId}",
+                LogLevel.Warning,
                 chatId,
                 messageId);
 
@@ -241,7 +299,8 @@ public sealed class TelegramGateway
                 payload,
                 cancellationToken);
 
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(
+                cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -251,13 +310,22 @@ public sealed class TelegramGateway
             _logger.LogWarning(
                 "Telegram answerCallbackQuery failed. StatusCode: {StatusCode}, Body: {Body}",
                 response.StatusCode,
-                RedactTelegramToken(body));
+                RedactSensitiveValue(body));
 
             return false;
         }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Telegram answerCallbackQuery failed.");
+            LogTransportFailure(
+                "answerCallbackQuery",
+                ex,
+                LogLevel.Warning);
+
             return false;
         }
     }
@@ -282,7 +350,8 @@ public sealed class TelegramGateway
                 payload,
                 cancellationToken);
 
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(
+                cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -294,15 +363,21 @@ public sealed class TelegramGateway
                 chatId,
                 messageId,
                 response.StatusCode,
-                RedactTelegramToken(body));
+                RedactSensitiveValue(body));
 
             return false;
         }
+        catch (OperationCanceledException)
+            when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            _logger.LogDebug(
+            LogTransportFailure(
+                "deleteMessage",
                 ex,
-                "Telegram deleteMessage failed. ChatId: {ChatId}, MessageId: {MessageId}",
+                LogLevel.Debug,
                 chatId,
                 messageId);
 
@@ -312,16 +387,43 @@ public sealed class TelegramGateway
 
     private string BuildTelegramApiUrl(string methodName)
     {
-        return $"https://api.telegram.org/bot{_options.Token.Trim()}/{methodName}";
+        return
+            $"https://api.telegram.org/bot{_options.Token.Trim()}/{methodName}";
     }
 
-    private string RedactTelegramToken(string value)
+    private string RedactSensitiveValue(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             return value;
         }
 
-        return value.Replace(_options.Token, "***BOT_TOKEN***");
+        var token = _options.Token.Trim();
+
+        return string.IsNullOrEmpty(token)
+            ? value
+            : value.Replace(
+                token,
+                "***BOT_TOKEN***",
+                StringComparison.Ordinal);
+    }
+
+    private void LogTransportFailure(
+        string operation,
+        Exception exception,
+        LogLevel logLevel,
+        long? chatId = null,
+        long? messageId = null)
+    {
+        var safeError = RedactSensitiveValue(exception.Message);
+
+        _logger.Log(
+            logLevel,
+            "Telegram {Operation} transport failure. ChatId: {ChatId}, MessageId: {MessageId}, ErrorType: {ErrorType}, Error: {Error}",
+            operation,
+            chatId,
+            messageId,
+            exception.GetType().Name,
+            safeError);
     }
 }

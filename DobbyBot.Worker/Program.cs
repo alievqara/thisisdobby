@@ -14,22 +14,60 @@ Env.TraversePath().Load();
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.Configure<DobbyBotOptions>(
-    builder.Configuration.GetSection("DobbyBot"));
+builder.Logging.AddFilter(
+    "System.Net.Http",
+    LogLevel.None);
 
-builder.Services.AddHttpClient<TelegramGateway>();
+builder.Logging.AddFilter(
+    "System.Net.Http.HttpClient",
+    LogLevel.None);
+
+builder.Services
+    .AddOptions<DobbyBotOptions>()
+    .Bind(
+        builder.Configuration.GetSection(
+            DobbyBotOptions.SectionName))
+    .Validate(
+        options =>
+            !string.IsNullOrWhiteSpace(options.Token),
+        "DobbyBot__Token is missing.")
+    .Validate(
+        options =>
+            options.AdminTelegramId > 0,
+        "DobbyBot__AdminTelegramId is missing or invalid.")
+    .ValidateOnStart();
+
+builder.Services.AddHttpClient<TelegramGateway>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(40);
+});
 
 builder.Services.AddSingleton<IAdminGuard, AdminGuard>();
 builder.Services.AddSingleton<ICommandExecutor, CommandExecutor>();
 
-builder.Services.AddSingleton<IServerStatusService, ServerStatusService>();
-builder.Services.AddSingleton<IServiceControlService, ServiceControlService>();
+builder.Services.AddSingleton<
+    IServerStatusService,
+    ServerStatusService>();
 
-builder.Services.AddSingleton<IDownloaderInputParser, DownloaderInputParser>();
-builder.Services.AddSingleton<IUserStateService, InMemoryUserStateService>();
+builder.Services.AddSingleton<
+    IServiceControlService,
+    ServiceControlService>();
 
-builder.Services.AddSingleton<IDockerService, DockerService>();
-builder.Services.AddSingleton<ISystemPowerService, SystemPowerService>();
+builder.Services.AddSingleton<
+    IDownloaderInputParser,
+    DownloaderInputParser>();
+
+builder.Services.AddSingleton<
+    IUserStateService,
+    InMemoryUserStateService>();
+
+builder.Services.AddSingleton<
+    IDockerService,
+    DockerService>();
+
+builder.Services.AddSingleton<
+    ISystemPowerService,
+    SystemPowerService>();
 
 builder.Services.AddSingleton<CommandRouter>();
 
