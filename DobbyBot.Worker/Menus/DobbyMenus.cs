@@ -7,357 +7,235 @@ public static class DobbyMenus
 {
     public static TelegramInlineKeyboardMarkup MainMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🏠 HomeLab", "menu:homelab"),
-                    Button("🐳 Docker", "menu:docker")
-                ],
-                [
-                    Button("🚀 Apps", "menu:apps"),
-                    Button("🗄 Data Layer", "menu:data")
-                ],
-                [
-                    Button("🌐 Proxy & SSL", "menu:proxy"),
-                    Button("💾 Backup", "menu:backup")
-                ],
-                [
-                    Button("📥 Downloader", "menu:downloader"),
-                    Button("⚙️ Settings", "menu:settings")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("🏠 HomeLab", "menu:homelab"),
+            Row("🐳 Docker", "menu:docker"),
+            Row("🚀 Apps", "menu:apps"),
+            Row("🗄 Data Layer", "menu:data"),
+            Row("🌐 Proxy & SSL", "menu:proxy"),
+            Row("💾 Backup", "menu:backup"),
+            Row("📥 Downloader", "menu:downloader"),
+            Row("⚙️ Settings", "menu:settings"));
     }
 
     public static TelegramInlineKeyboardMarkup HomeLabMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("📊 Status", "homelab:status"),
-                    Button("💽 Disk", "homelab:disk")
-                ],
-                [
-                    Button("🧠 Memory", "homelab:memory"),
-                    Button("🔥 CPU / Load", "homelab:load")
-                ],
-                [
-                    Button("🧯 Failed Services", "homelab:failed-services")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("📊 Status", "homelab:status"),
+            Row("💽 Disk", "homelab:disk"),
+            Row("🧠 Memory", "homelab:memory"),
+            Row("🔥 CPU / Load", "homelab:load"),
+            Row("🧯 Failed Services", "homelab:failed-services"),
+            Row("⬅️ Back", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DockerGroupsMenu(
-    IReadOnlyList<DockerContainerGroup> groups)
+        IReadOnlyList<DockerContainerGroup> groups)
     {
-        var rows = new List<TelegramInlineKeyboardButton[]>();
+        var rows = groups
+            .Select(group =>
+                Row(
+                    $"{group.Icon} {group.Title} ({group.Count})",
+                    $"docker:group:{group.Key}"))
+            .ToList();
 
-        foreach (var group in groups)
-        {
-            rows.Add(
-            [
-                Button(
-                $"{group.Icon} {group.Title} ({group.Count})",
-                $"docker:group:{group.Key}")
-            ]);
-        }
+        rows.Add(Row("⬅️ Back", "menu:main"));
 
-        rows.Add(
-        [
-            Button("⬅️ Back", "menu:main")
-        ]);
-
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard = rows.ToArray()
-        };
+        return Keyboard(rows);
     }
 
     public static TelegramInlineKeyboardMarkup DockerGroupMenu(
-    DockerContainerGroup group)
+        DockerContainerGroup group)
     {
-        var rows = new List<TelegramInlineKeyboardButton[]>();
+        var rows = group.Containers
+            .Take(20)
+            .Select(container =>
+            {
+                var icon = IsRunning(container)
+                    ? "🟢"
+                    : "🔴";
 
-        foreach (var container in group.Containers.Take(20))
-        {
-            var icon = IsRunning(container)
-                ? "🟢"
-                : "🔴";
+                return Row(
+                    $"{icon} {ShortName(container.Name)}",
+                    $"docker:container:{container.Id}:{group.Key}");
+            })
+            .ToList();
 
-            rows.Add(
-            [
-                Button(
-                $"{icon} {ShortName(container.Name)}",
-                $"docker:container:{container.Id}:{group.Key}")
-            ]);
-        }
+        rows.Add(Row("⬅️ Docker", "menu:docker"));
+        rows.Add(Row("🏠 Home", "menu:main"));
 
-        rows.Add(
-        [
-            Button("⬅️ Docker", "menu:docker"),
-        Button("🏠 Home", "menu:main")
-        ]);
-
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard = rows.ToArray()
-        };
+        return Keyboard(rows);
     }
 
     public static TelegramInlineKeyboardMarkup DockerContainerMenu(
         string containerId,
         string groupKey)
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("📄 Logs", $"docker:container:{containerId}:logs"),
-                    Button("📋 Inspect", $"docker:container:{containerId}:inspect")
-                ],
-                [
-                    Button("⬅️ Group", $"docker:group:{groupKey}"),
-                    Button("🐳 Docker", "menu:docker")
-                ],
-                [
-                    Button("🏠 Home", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row(
+                "📄 Logs",
+                $"docker:container:{containerId}:logs"),
+            Row(
+                "📋 Inspect",
+                $"docker:container:{containerId}:inspect"),
+            Row(
+                "⬅️ Group",
+                $"docker:group:{groupKey}"),
+            Row("🐳 Docker", "menu:docker"),
+            Row("🏠 Home", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup AppsMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🧦 This is Dobby", "apps:dobby")
-                ],
-                [
-                    Button("📅 Planzy", "apps:planzy"),
-                ],
-                [
-                    Button("🎲 GoLotto", "apps:golotto")
-                ],
-                [
-                    Button("🥊 CombatFight", "apps:combatfight")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("🧦 This is Dobby", "apps:dobby"),
+            Row("📅 Planzy", "apps:planzy"),
+            Row("🥊 CombatFight", "apps:combatfight"),
+            Row("⬅️ Back", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DobbyAppMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("📊 Status", "app:dobby:status"),
-                    Button("📜 Logs", "app:dobby:logs")
-                ],
-                [
-                    Button("🧪 Healthcheck", "app:dobby:healthcheck"),
-                    Button("🤖 Dobby AI", "apps:dobby-ai")
-                ],
-                [
-                    Button("⬅️ Apps", "menu:apps"),
-                    Button("🏠 Home", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("📊 Status", "app:dobby:status"),
+            Row("📜 Logs", "app:dobby:logs"),
+            Row("🧪 Healthcheck", "app:dobby:healthcheck"),
+            Row("⬅️ Apps", "menu:apps"),
+            Row("🏠 Home", "menu:main"));
     }
 
-    public static TelegramInlineKeyboardMarkup AppDetailsMenu(string appKey)
+    public static TelegramInlineKeyboardMarkup AppDetailsMenu(
+        string appKey)
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("📊 Status", $"app:{appKey}:status"),
-                    Button("📜 Logs", $"app:{appKey}:logs")
-                ],
-                [
-                    Button("🧪 Healthcheck", $"app:{appKey}:healthcheck")
-                ],
-                [
-                    Button("⬅️ Apps", "menu:apps"),
-                    Button("🏠 Home", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("📊 Status", $"app:{appKey}:status"),
+            Row("📜 Logs", $"app:{appKey}:logs"),
+            Row("🧪 Healthcheck", $"app:{appKey}:healthcheck"),
+            Row("⬅️ Apps", "menu:apps"),
+            Row("🏠 Home", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DataLayerMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🐘 PostgreSQL", "data:postgres"),
-                    Button("⚡ Redis", "data:redis")
-                ],
-                [
-                    Button("💾 Volumes", "data:volumes"),
-                    Button("🔐 DB Backups", "data:backups")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("🐘 PostgreSQL", "data:postgres"),
+            Row("⚡ Redis", "data:redis"),
+            Row("💾 Volumes", "data:volumes"),
+            Row("🔐 DB Backups", "data:backups"),
+            Row("⬅️ Back", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup ProxyMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🌍 Proxy Status", "proxy:npm-status")
-                ],
-                [
-                    Button("🔐 SSL Certificates", "proxy:ssl"),
-                    Button("🧪 Check Domains", "proxy:domains")
-                ],
-                [
-                    Button("📡 Proxy Network", "proxy:network")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("🌍 Proxy Status", "proxy:npm-status"),
+            Row("🔐 SSL Certificates", "proxy:ssl"),
+            Row("🧪 Check Domains", "proxy:domains"),
+            Row("📡 Proxy Network", "proxy:network"),
+            Row("⬅️ Back", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup BackupMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🗂 Backup List", "backup:list"),
-                    Button("🧪 Verify Backup", "backup:verify")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("🗂 Backup List", "backup:list"),
+            Row("🧪 Verify Backup", "backup:verify"),
+            Row("⬅️ Back", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DownloaderMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("📤 Send Telegram File", "downloader:telegram-file")
-                ],
-                [
-                    Button("🔗 Send Link / Username", "downloader:input")
-                ],
-                [
-                    Button("🗂 Downloads Folder", "downloader:folder"),
-                    Button("🧹 Cleanup Temp", "downloader:cleanup-request")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row(
+                "📤 Send Telegram File",
+                "downloader:telegram-file"),
+            Row(
+                "🔗 Send Link / Username",
+                "downloader:input"),
+            Row(
+                "🗂 Downloads Folder",
+                "downloader:folder"),
+            Row(
+                "🧹 Cleanup Temp",
+                "downloader:cleanup-request"),
+            Row("⬅️ Back", "menu:main"));
     }
 
-    public static TelegramInlineKeyboardMarkup DownloaderPlatformSelectionMenu()
+    public static TelegramInlineKeyboardMarkup
+        DownloaderPlatformSelectionMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("Instagram", "downloader:platform:instagram"),
-                    Button("Telegram", "downloader:platform:telegram")
-                ],
-                [
-                    Button("Cancel", "downloader:cancel")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row(
+                "Instagram",
+                "downloader:platform:instagram"),
+            Row(
+                "Telegram",
+                "downloader:platform:telegram"),
+            Row(
+                "Cancel",
+                "downloader:cancel"));
     }
 
     public static TelegramInlineKeyboardMarkup SettingsMenu()
     {
-        return new TelegramInlineKeyboardMarkup
-        {
-            InlineKeyboard =
-            [
-                [
-                    Button("🔁 Reboot", "settings:reboot-request"),
-                    Button("⏻ Power Off", "settings:poweroff-request")
-                ],
-                [
-                    Button("📜 Dobby Logs", "settings:dobby-logs")
-                ],
-                [
-                    Button("🕒 Runtime / Boot Info", "settings:runtime")
-                ],
-                [
-                    Button("⬅️ Back", "menu:main")
-                ]
-            ]
-        };
+        return Keyboard(
+            Row("🔁 Reboot", "settings:reboot-request"),
+            Row("⏻ Power Off", "settings:poweroff-request"),
+            Row("📜 Dobby Logs", "settings:dobby-logs"),
+            Row("🕒 Runtime / Boot Info", "settings:runtime"),
+            Row("⬅️ Back", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup ConfirmationMenu(
         string confirmCallback,
         string cancelCallback = "menu:main")
     {
+        return Keyboard(
+            Row("✅ Confirm", confirmCallback),
+            Row("❌ Cancel", cancelCallback));
+    }
+
+    private static TelegramInlineKeyboardMarkup Keyboard(
+        params TelegramInlineKeyboardButton[][] rows)
+    {
         return new TelegramInlineKeyboardMarkup
         {
-            InlineKeyboard =
-            [
-                [
-                    Button("✅ Confirm", confirmCallback),
-                    Button("❌ Cancel", cancelCallback)
-                ]
-            ]
+            InlineKeyboard = rows
         };
     }
 
-    private static TelegramInlineKeyboardButton Button(
+    private static TelegramInlineKeyboardMarkup Keyboard(
+        IReadOnlyCollection<TelegramInlineKeyboardButton[]> rows)
+    {
+        return new TelegramInlineKeyboardMarkup
+        {
+            InlineKeyboard = rows.ToArray()
+        };
+    }
+
+    private static TelegramInlineKeyboardButton[] Row(
         string text,
         string callbackData)
     {
-        return new TelegramInlineKeyboardButton
-        {
-            Text = text,
-            CallbackData = callbackData
-        };
+        return
+        [
+            new TelegramInlineKeyboardButton
+            {
+                Text = text,
+                CallbackData = callbackData
+            }
+        ];
     }
 
-    private static bool IsRunning(DockerContainerInfo container)
+    private static bool IsRunning(
+        DockerContainerInfo container)
     {
-        return container.State.Equals("running", StringComparison.OrdinalIgnoreCase) ||
-               container.Status.StartsWith("Up", StringComparison.OrdinalIgnoreCase);
+        return container.State.Equals(
+                   "running",
+                   StringComparison.OrdinalIgnoreCase) ||
+               container.Status.StartsWith(
+                   "Up",
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ShortName(string value)

@@ -62,4 +62,4 @@ compose.override.yml
 # Local runtime data
 downloads/
 temp/
-tmp/
+tmp/**/.env
