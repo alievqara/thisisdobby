@@ -16,7 +16,21 @@ public sealed class ServerStatusService : IServerStatusService
         var uptime = Clean(await RunAsync("uptime", ["-p"], cancellationToken)).Replace("up ", "");
         var load = ParseLoad(await RunAsync("cat", ["/proc/loadavg"], cancellationToken));
         var memory = ParseMemory(await RunAsync("free", ["-h"], cancellationToken));
-        var disk = ParseDisk(await RunAsync("df", ["-h", "/"], cancellationToken));
+
+        var systemDisk = ParseDisk(
+            await RunAsync(
+                "df",
+                ["-h", "/"],
+                cancellationToken));
+
+        var storageDiskRaw = await BashAsync(
+            $"df -h {EscapeShellArg(StoragePath)} 2>/dev/null | tail -n +2",
+            cancellationToken);
+
+        var storageDisk = string.IsNullOrWhiteSpace(storageDiskRaw)
+            ? "not mounted"
+            : ParseDfLine(storageDiskRaw);
+
         var ip = ParseIp(await RunAsync("hostname", ["-I"], cancellationToken));
 
         var failedServices = Clean(await BashAsync("systemctl --failed --no-legend 2>/dev/null | wc -l", cancellationToken));
@@ -37,7 +51,8 @@ public sealed class ServerStatusService : IServerStatusService
 ⚙️ System
 • CPU Load: {load}
 • RAM: {memory}
-• Disk: {disk}
+• SSD: {systemDisk}
+• HDD: {storageDisk}
 • IP: {ip}
 • Failed Services: {failedServices}
 
