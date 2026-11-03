@@ -1,3 +1,4 @@
+using DobbyBot.Worker.Services.Apps;
 using DobbyBot.Worker.Bot;
 using DobbyBot.Worker.Commands;
 using DobbyBot.Worker.Execution;
@@ -69,6 +70,10 @@ builder.Services.AddSingleton<
     ISystemPowerService,
     SystemPowerService>();
 
+builder.Services.Configure<AppManagementOptions>(builder.Configuration.GetSection("Homelab"));
+builder.Services.AddSingleton<IAppProcessRunner, AppProcessRunner>();
+builder.Services.AddSingleton<AppManagementService>();
+builder.Services.AddSingleton<AppsPanel>();
 builder.Services.AddSingleton<CommandRouter>();
 
 builder.Services.AddHostedService<DobbyBotWorker>();

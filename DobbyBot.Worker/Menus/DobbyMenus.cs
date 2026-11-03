@@ -1,4 +1,4 @@
-﻿using DobbyBot.Worker.Bot;
+using DobbyBot.Worker.Bot;
 using DobbyBot.Worker.Services.Docker;
 
 namespace DobbyBot.Worker.Menus;
@@ -8,25 +8,21 @@ public static class DobbyMenus
     public static TelegramInlineKeyboardMarkup MainMenu()
     {
         return Keyboard(
-            Row("🏠 HomeLab", "menu:homelab"),
-            Row("🐳 Docker", "menu:docker"),
-            Row("🚀 Apps", "menu:apps"),
-            Row("🗄 Data Layer", "menu:data"),
-            Row("🌐 Proxy & SSL", "menu:proxy"),
-            Row("💾 Backup", "menu:backup"),
-            Row("📥 Downloader", "menu:downloader"),
-            Row("⚙️ Settings", "menu:settings"));
+            [new() { Text = "◎ Sistem", CallbackData = "menu:homelab" }, new() { Text = "▦ Tətbiqlər", CallbackData = "menu:apps" }],
+            [new() { Text = "◫ Konteynerlər", CallbackData = "menu:docker" }, new() { Text = "▤ Verilənlər", CallbackData = "menu:data" }],
+            [new() { Text = "↗ Şəbəkə / SSL", CallbackData = "menu:proxy" }, new() { Text = "◷ Ehtiyat nüsxələr", CallbackData = "menu:backup" }],
+            [new() { Text = "↓ Yükləmələr", CallbackData = "menu:downloader" }, new() { Text = "⚙ İdarəetmə", CallbackData = "menu:settings" }]);
     }
 
     public static TelegramInlineKeyboardMarkup HomeLabMenu()
     {
         return Keyboard(
-            Row("📊 Status", "homelab:status"),
-            Row("💽 Disk", "homelab:disk"),
-            Row("🧠 Memory", "homelab:memory"),
-            Row("🔥 CPU / Load", "homelab:load"),
-            Row("🧯 Failed Services", "homelab:failed-services"),
-            Row("⬅️ Back", "menu:main"));
+            Row("◎ Ümumi vəziyyət", "homelab:status"),
+            Row("◴ Disk", "homelab:disk"),
+            Row("▥ Yaddaş", "homelab:memory"),
+            Row("▥ CPU / Yük", "homelab:load"),
+            Row("⚠ Xətalı servislər", "homelab:failed-services"),
+            Row("‹ Geri", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DockerGroupsMenu(
@@ -39,7 +35,7 @@ public static class DobbyMenus
                     $"docker:group:{group.Key}"))
             .ToList();
 
-        rows.Add(Row("⬅️ Back", "menu:main"));
+        rows.Add(Row("‹ Geri", "menu:main"));
 
         return Keyboard(rows);
     }
@@ -61,8 +57,8 @@ public static class DobbyMenus
             })
             .ToList();
 
-        rows.Add(Row("⬅️ Docker", "menu:docker"));
-        rows.Add(Row("🏠 Home", "menu:main"));
+        rows.Add(Row("‹ Konteynerlər", "menu:docker"));
+        rows.Add(Row("⌂ Əsas panel", "menu:main"));
 
         return Keyboard(rows);
     }
@@ -73,46 +69,26 @@ public static class DobbyMenus
     {
         return Keyboard(
             Row(
-                "📄 Logs",
+                "≡ Loqlar",
                 $"docker:container:{containerId}:logs"),
             Row(
-                "📋 Inspect",
+                "◎ Detallar",
                 $"docker:container:{containerId}:inspect"),
             Row(
-                "⬅️ Group",
+                "‹ Qrup",
                 $"docker:group:{groupKey}"),
-            Row("🐳 Docker", "menu:docker"),
-            Row("🏠 Home", "menu:main"));
-    }
-
-    public static TelegramInlineKeyboardMarkup AppsMenu()
-    {
-        return Keyboard(
-            Row("🧦 This is Dobby", "apps:dobby"),
-            Row("📅 Planzy", "apps:planzy"),
-            Row("🥊 CombatFight", "apps:combatfight"),
-            Row("⬅️ Back", "menu:main"));
+            Row("◫ Konteynerlər", "menu:docker"),
+            Row("⌂ Əsas panel", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DobbyAppMenu()
     {
         return Keyboard(
-            Row("📊 Status", "app:dobby:status"),
+            Row("◎ Ümumi vəziyyət", "app:dobby:status"),
             Row("📜 Logs", "app:dobby:logs"),
             Row("🧪 Healthcheck", "app:dobby:healthcheck"),
             Row("⬅️ Apps", "menu:apps"),
-            Row("🏠 Home", "menu:main"));
-    }
-
-    public static TelegramInlineKeyboardMarkup AppDetailsMenu(
-        string appKey)
-    {
-        return Keyboard(
-            Row("📊 Status", $"app:{appKey}:status"),
-            Row("📜 Logs", $"app:{appKey}:logs"),
-            Row("🧪 Healthcheck", $"app:{appKey}:healthcheck"),
-            Row("⬅️ Apps", "menu:apps"),
-            Row("🏠 Home", "menu:main"));
+            Row("⌂ Əsas panel", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DataLayerMenu()
@@ -120,45 +96,45 @@ public static class DobbyMenus
         return Keyboard(
             Row("🐘 PostgreSQL", "data:postgres"),
             Row("⚡ Redis", "data:redis"),
-            Row("💾 Volumes", "data:volumes"),
-            Row("🔐 DB Backups", "data:backups"),
-            Row("⬅️ Back", "menu:main"));
+            Row("▤ Disk həcmləri", "data:volumes"),
+            Row("◷ DB nüsxələri", "data:backups"),
+            Row("‹ Geri", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup ProxyMenu()
     {
         return Keyboard(
-            Row("🌍 Proxy Status", "proxy:npm-status"),
-            Row("🔐 SSL Certificates", "proxy:ssl"),
-            Row("🧪 Check Domains", "proxy:domains"),
-            Row("📡 Proxy Network", "proxy:network"),
-            Row("⬅️ Back", "menu:main"));
+            Row("◎ Proxy vəziyyəti", "proxy:npm-status"),
+            Row("◇ SSL sertifikatları", "proxy:ssl"),
+            Row("◎ Domain yoxlaması", "proxy:domains"),
+            Row("↗ Proxy şəbəkəsi", "proxy:network"),
+            Row("‹ Geri", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup BackupMenu()
     {
         return Keyboard(
-            Row("🗂 Backup List", "backup:list"),
-            Row("🧪 Verify Backup", "backup:verify"),
-            Row("⬅️ Back", "menu:main"));
+            Row("≡ Nüsxələrin siyahısı", "backup:list"),
+            Row("◎ Nüsxəni yoxla", "backup:verify"),
+            Row("‹ Geri", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup DownloaderMenu()
     {
         return Keyboard(
             Row(
-                "📤 Send Telegram File",
+                "↑ Fayl göndər",
                 "downloader:telegram-file"),
             Row(
-                "🔗 Send Link / Username",
+                "↗ Link / İstifadəçi adı",
                 "downloader:input"),
             Row(
-                "🗂 Downloads Folder",
+                "▤ Yükləmə qovluğu",
                 "downloader:folder"),
             Row(
-                "🧹 Cleanup Temp",
+                "× Keşi təmizlə",
                 "downloader:cleanup-request"),
-            Row("⬅️ Back", "menu:main"));
+            Row("‹ Geri", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup
@@ -179,11 +155,11 @@ public static class DobbyMenus
     public static TelegramInlineKeyboardMarkup SettingsMenu()
     {
         return Keyboard(
-            Row("🔁 Reboot", "settings:reboot-request"),
-            Row("⏻ Power Off", "settings:poweroff-request"),
-            Row("📜 Dobby Logs", "settings:dobby-logs"),
-            Row("🕒 Runtime / Boot Info", "settings:runtime"),
-            Row("⬅️ Back", "menu:main"));
+            Row("↻ Serveri yenidən başlat", "settings:reboot-request"),
+            Row("⏻ Serveri söndür", "settings:poweroff-request"),
+            Row("≡ Bot loqları", "settings:dobby-logs"),
+            Row("◷ İşləmə müddəti", "settings:runtime"),
+            Row("‹ Geri", "menu:main"));
     }
 
     public static TelegramInlineKeyboardMarkup ConfirmationMenu(
@@ -191,8 +167,8 @@ public static class DobbyMenus
         string cancelCallback = "menu:main")
     {
         return Keyboard(
-            Row("✅ Confirm", confirmCallback),
-            Row("❌ Cancel", cancelCallback));
+            Row("✓ Təsdiqlə", confirmCallback),
+            Row("× Ləğv et", cancelCallback));
     }
 
     private static TelegramInlineKeyboardMarkup Keyboard(
@@ -200,7 +176,7 @@ public static class DobbyMenus
     {
         return new TelegramInlineKeyboardMarkup
         {
-            InlineKeyboard = rows
+            InlineKeyboard = Compact(rows)
         };
     }
 
@@ -209,7 +185,7 @@ public static class DobbyMenus
     {
         return new TelegramInlineKeyboardMarkup
         {
-            InlineKeyboard = rows.ToArray()
+            InlineKeyboard = Compact(rows.ToArray())
         };
     }
 
@@ -227,6 +203,20 @@ public static class DobbyMenus
         ];
     }
 
+    private static TelegramInlineKeyboardButton[][] Compact(TelegramInlineKeyboardButton[][] rows)
+    {
+        var result = new List<TelegramInlineKeyboardButton[]>();
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var row = rows[i];
+            if (row.Length == 1 && i + 1 < rows.Length && rows[i + 1].Length == 1 &&
+                !row[0].Text.StartsWith("‹") && !rows[i + 1][0].Text.StartsWith("‹") &&
+                row[0].Text.Length + rows[i + 1][0].Text.Length < 43)
+                result.Add([row[0], rows[++i][0]]);
+            else result.Add(row);
+        }
+        return result.ToArray();
+    }
     private static bool IsRunning(
         DockerContainerInfo container)
     {

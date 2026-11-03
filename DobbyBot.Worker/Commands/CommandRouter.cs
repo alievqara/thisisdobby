@@ -1,4 +1,5 @@
 using System.Text;
+using DobbyBot.Worker.Services.Apps;
 using DobbyBot.Worker.Bot;
 using DobbyBot.Worker.Menus;
 using DobbyBot.Worker.Modules.Downloader;
@@ -13,6 +14,7 @@ public sealed class CommandRouter
 {
     private const string HiddenDockerGroupKey = "ai";
 
+    private readonly AppsPanel _appsPanel;
     private readonly IServerStatusService _serverStatusService;
     private readonly IDownloaderInputParser _downloaderInputParser;
     private readonly IUserStateService _userStateService;
@@ -24,13 +26,14 @@ public sealed class CommandRouter
         IDownloaderInputParser downloaderInputParser,
         IUserStateService userStateService,
         IDockerService dockerService,
-        ISystemPowerService systemPowerService)
+        ISystemPowerService systemPowerService, AppsPanel appsPanel)
     {
         _serverStatusService = serverStatusService;
         _downloaderInputParser = downloaderInputParser;
         _userStateService = userStateService;
         _dockerService = dockerService;
         _systemPowerService = systemPowerService;
+        _appsPanel = appsPanel;
     }
 
     public bool ExpectsTextInput(long telegramUserId)
@@ -80,6 +83,13 @@ public sealed class CommandRouter
         string callbackData,
         CancellationToken cancellationToken)
     {
+        if ((callbackData.StartsWith("apps:", StringComparison.Ordinal) && callbackData != "apps:dobby") ||
+            (callbackData.StartsWith("app:", StringComparison.Ordinal) && !callbackData.StartsWith("app:dobby:", StringComparison.Ordinal)))
+            return await _appsPanel.HandleAsync(telegramUserId, "menu:apps", cancellationToken);
+
+        if (callbackData == "menu:apps" || callbackData.StartsWith("managed:", StringComparison.Ordinal))
+            return await _appsPanel.HandleAsync(telegramUserId, callbackData, cancellationToken);
+
         return callbackData switch
         {
             "menu:main" =>
@@ -92,7 +102,7 @@ public sealed class CommandRouter
                 await DockerGroups(cancellationToken),
 
             "menu:apps" =>
-                AppsMenu(),
+                await _appsPanel.HandleAsync(telegramUserId, "menu:apps", cancellationToken),
 
             "menu:data" =>
                 DataLayerMenu(),
@@ -156,16 +166,6 @@ public sealed class CommandRouter
             "apps:dobby" =>
                 DobbyAppDetails(),
 
-            "apps:planzy" =>
-                AppDetails(
-                    "planzy",
-                    "📅 Planzy"),
-
-            "apps:combatfight" =>
-                AppDetails(
-                    "combatfight",
-                    "🥊 CombatFight"),
-
             "app:dobby:status" =>
                 new BotResponse(
                     await _systemPowerService.GetRuntimeInfoAsync(
@@ -187,36 +187,6 @@ public sealed class CommandRouter
                     🟢 Telegram callback routing is working.
                     """,
                     DobbyMenus.DobbyAppMenu()),
-
-            _ when callbackData.EndsWith(
-                       ":status",
-                       StringComparison.OrdinalIgnoreCase) &&
-                   callbackData.StartsWith(
-                       "app:",
-                       StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(
-                    callbackData,
-                    "📊 Status"),
-
-            _ when callbackData.EndsWith(
-                       ":logs",
-                       StringComparison.OrdinalIgnoreCase) &&
-                   callbackData.StartsWith(
-                       "app:",
-                       StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(
-                    callbackData,
-                    "📜 Logs"),
-
-            _ when callbackData.EndsWith(
-                       ":healthcheck",
-                       StringComparison.OrdinalIgnoreCase) &&
-                   callbackData.StartsWith(
-                       "app:",
-                       StringComparison.OrdinalIgnoreCase) =>
-                AppOperationPlaceholder(
-                    callbackData,
-                    "🧪 Healthcheck"),
 
             "data:postgres" =>
                 new BotResponse(
@@ -744,56 +714,49 @@ public sealed class CommandRouter
     private static BotResponse MainMenu()
     {
         return new BotResponse(
-            "🏠 HomeLab",
+            "DOBBY · HOMELAB CONTROL\n━━━━━━━━━━━━━━━━━━━━\n\nServer, tətbiqlər və infrastruktur bir paneldə.\nİdarə etmək istədiyin bölməni seç.",
             DobbyMenus.MainMenu());
     }
 
     private static BotResponse HomeLabMenu()
     {
         return new BotResponse(
-            "🏠 HomeLab",
+            "SİSTEM MONİTORU\n━━━━━━━━━━━━━━━━━━━━\n\nResurslar və servis sağlamlığı",
             DobbyMenus.HomeLabMenu());
-    }
-
-    private static BotResponse AppsMenu()
-    {
-        return new BotResponse(
-            "🚀 Apps",
-            DobbyMenus.AppsMenu());
     }
 
     private static BotResponse DataLayerMenu()
     {
         return new BotResponse(
-            "🗄 Data Layer",
+            "VERİLƏNLƏR\n━━━━━━━━━━━━━━━━━━━━\n\nBazalar, disk həcmləri və ehtiyat nüsxələr",
             DobbyMenus.DataLayerMenu());
     }
 
     private static BotResponse ProxyMenu()
     {
         return new BotResponse(
-            "🌐 Proxy & SSL",
+            "ŞƏBƏKƏ VƏ SSL\n━━━━━━━━━━━━━━━━━━━━\n\nProxy vəziyyəti və sertifikatlar",
             DobbyMenus.ProxyMenu());
     }
 
     private static BotResponse BackupMenu()
     {
         return new BotResponse(
-            "💾 Backup",
+            "EHTİYAT NÜSXƏLƏR\n━━━━━━━━━━━━━━━━━━━━\n\nSaxlanmış nüsxələri yoxla",
             DobbyMenus.BackupMenu());
     }
 
     private static BotResponse DownloaderMenu()
     {
         return new BotResponse(
-            "📥 Downloader",
+            "YÜKLƏMƏLƏR\n━━━━━━━━━━━━━━━━━━━━\n\nFayl və link alətləri",
             DobbyMenus.DownloaderMenu());
     }
 
     private static BotResponse SettingsMenu()
     {
         return new BotResponse(
-            "⚙️ Settings",
+            "İDARƏETMƏ\n━━━━━━━━━━━━━━━━━━━━\n\nBot diaqnostikası və server əməliyyatları",
             DobbyMenus.SettingsMenu());
     }
 
@@ -808,56 +771,6 @@ public sealed class CommandRouter
             🧪 Healthcheck
             """,
             DobbyMenus.DobbyAppMenu());
-    }
-
-    private static BotResponse AppDetails(
-        string appKey,
-        string title)
-    {
-        return new BotResponse(
-            $"""
-             {title}
-
-             App key:
-             {appKey}
-
-             Hazırda:
-             📊 Status
-             📜 Logs
-             🧪 Healthcheck
-             """,
-            DobbyMenus.AppDetailsMenu(appKey));
-    }
-
-    private static BotResponse AppOperationPlaceholder(
-        string callbackData,
-        string operationTitle)
-    {
-        var appKey = ExtractAppKey(callbackData);
-
-        return new BotResponse(
-            $"""
-             {operationTitle}
-
-             App:
-             {appKey}
-
-             Real app operation runner hələ qoşulmayıb.
-             """,
-            DobbyMenus.AppDetailsMenu(appKey));
-    }
-
-    private static string ExtractAppKey(
-        string callbackData)
-    {
-        var parts = callbackData.Split(
-            ':',
-            StringSplitOptions.RemoveEmptyEntries |
-            StringSplitOptions.TrimEntries);
-
-        return parts.Length >= 2
-            ? parts[1]
-            : "unknown";
     }
 
     private static BotResponse Confirmation(
