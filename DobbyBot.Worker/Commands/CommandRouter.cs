@@ -14,6 +14,8 @@ public sealed class CommandRouter
 {
     private const string HiddenDockerGroupKey = "ai";
 
+    private readonly HomelabPanel _homelabPanel;
+    private readonly AppOperations _operations;
     private readonly AppsPanel _appsPanel;
     private readonly IServerStatusService _serverStatusService;
     private readonly IDownloaderInputParser _downloaderInputParser;
@@ -26,7 +28,7 @@ public sealed class CommandRouter
         IDownloaderInputParser downloaderInputParser,
         IUserStateService userStateService,
         IDockerService dockerService,
-        ISystemPowerService systemPowerService, AppsPanel appsPanel)
+        ISystemPowerService systemPowerService, AppsPanel appsPanel, HomelabPanel homelabPanel, AppOperations operations)
     {
         _serverStatusService = serverStatusService;
         _downloaderInputParser = downloaderInputParser;
@@ -34,6 +36,8 @@ public sealed class CommandRouter
         _dockerService = dockerService;
         _systemPowerService = systemPowerService;
         _appsPanel = appsPanel;
+        _homelabPanel = homelabPanel;
+        _operations = operations;
     }
 
     public bool ExpectsTextInput(long telegramUserId)
@@ -62,7 +66,7 @@ public sealed class CommandRouter
         {
             _userStateService.Clear(telegramUserId);
 
-            return Task.FromResult(MainMenu());
+            return _homelabPanel.HandleAsync("menu:main", cancellationToken);
         }
 
         if (ExpectsTextInput(telegramUserId))
@@ -81,14 +85,22 @@ public sealed class CommandRouter
     public async Task<BotResponse> HandleCallbackAsync(
         long telegramUserId,
         string callbackData,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, long? chatId = null)
     {
         if ((callbackData.StartsWith("apps:", StringComparison.Ordinal) && callbackData != "apps:dobby") ||
             (callbackData.StartsWith("app:", StringComparison.Ordinal) && !callbackData.StartsWith("app:dobby:", StringComparison.Ordinal)))
             return await _appsPanel.HandleAsync(telegramUserId, "menu:apps", cancellationToken);
 
-        if (callbackData == "menu:apps" || callbackData.StartsWith("managed:", StringComparison.Ordinal))
-            return await _appsPanel.HandleAsync(telegramUserId, callbackData, cancellationToken);
+        if (callbackData.StartsWith("menu:apps", StringComparison.Ordinal) || callbackData.StartsWith("managed:", StringComparison.Ordinal))
+            return await _appsPanel.HandleAsync(telegramUserId, callbackData, cancellationToken, chatId);
+
+        if (callbackData == "menu:main" || callbackData.StartsWith("fleet:", StringComparison.Ordinal))
+        {
+            _userStateService.Clear(telegramUserId);
+            return await _homelabPanel.HandleAsync(callbackData, cancellationToken);
+        }
+        if (callbackData == "operations:list") return _operations.Panel(telegramUserId);
+        if (callbackData == "proxy:network") return await _homelabPanel.HandleAsync("fleet:networks", cancellationToken);
 
         return callbackData switch
         {
@@ -228,12 +240,6 @@ public sealed class CommandRouter
                 NotImplementedOperation(
                     "🧪 Check Domains",
                     "Domain healthcheck üçün ayrıca domain registry əlavə ediləcək.",
-                    DobbyMenus.ProxyMenu()),
-
-            "proxy:network" =>
-                NotImplementedOperation(
-                    "📡 Proxy Network",
-                    "Docker proxy network inspector növbəti mərhələdə əlavə ediləcək.",
                     DobbyMenus.ProxyMenu()),
 
             "backup:list" =>
@@ -749,7 +755,7 @@ public sealed class CommandRouter
     private static BotResponse DownloaderMenu()
     {
         return new BotResponse(
-            "YÜKLƏMƏLƏR\n━━━━━━━━━━━━━━━━━━━━\n\nFayl və link alətləri",
+            "📥 Yükləmələr\n\n🚧 Downloader hələ aktiv deyil. Bu bölmə ayrıca tamamlanacaq.\n\nHazırda sistem və tətbiq idarəetməsindən istifadə edə bilərsən.",
             DobbyMenus.DownloaderMenu());
     }
 

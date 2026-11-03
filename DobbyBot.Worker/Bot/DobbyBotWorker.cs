@@ -228,21 +228,10 @@ public sealed class DobbyBotWorker : BackgroundService
             return;
         }
 
-        if (callbackQuery.Data.StartsWith("managed:", StringComparison.Ordinal) &&
-            callbackQuery.Data.Contains(":confirm:", StringComparison.Ordinal))
-        {
-            await _telegramGateway.EditMessageTextAsync(
-                callbackQuery.Message.Chat.Id,
-                callbackQuery.Message.MessageId,
-                "⏳ Əməliyyat yoxlanılır və icra olunur…\n\nGitHub yeniləməsi bir neçə dəqiqə çəkə bilər. Nəticə bu mesajda görünəcək.",
-                replyMarkup: null,
-                cancellationToken);
-        }
-
         var response = await _commandRouter.HandleCallbackAsync(
             telegramUserId,
             callbackQuery.Data,
-            cancellationToken);
+            cancellationToken, callbackQuery.Message.Chat.Id);
 
         if (response.SendAsNewMessage)
         {

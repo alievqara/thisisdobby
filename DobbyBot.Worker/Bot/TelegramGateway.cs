@@ -99,6 +99,7 @@ public sealed class TelegramGateway
         TelegramInlineKeyboardMarkup? replyMarkup,
         CancellationToken cancellationToken)
     {
+        text = DobbyBot.Worker.Services.Apps.PanelText.Clip(text, 3900);
         var url = BuildTelegramApiUrl("sendMessage");
 
         object payload = replyMarkup is null
@@ -215,6 +216,7 @@ public sealed class TelegramGateway
         TelegramInlineKeyboardMarkup? replyMarkup,
         CancellationToken cancellationToken)
     {
+        text = DobbyBot.Worker.Services.Apps.PanelText.Clip(text, 3900);
         var url = BuildTelegramApiUrl("editMessageText");
 
         object payload = replyMarkup is null

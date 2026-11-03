@@ -14,6 +14,10 @@ using DotNetEnv;
 Env.TraversePath().Load();
 
 var builder = Host.CreateApplicationBuilder(args);
+// Keep homelab deployment settings outside immutable release directories.
+builder.Configuration.AddJsonFile("homelab.json", optional: true, reloadOnChange: false)
+    .AddEnvironmentVariables();
+if (args.Length > 0) builder.Configuration.AddCommandLine(args);
 
 builder.Logging.AddFilter(
     "System.Net.Http",
@@ -73,6 +77,10 @@ builder.Services.AddSingleton<
 builder.Services.Configure<AppManagementOptions>(builder.Configuration.GetSection("Homelab"));
 builder.Services.AddSingleton<IAppProcessRunner, AppProcessRunner>();
 builder.Services.AddSingleton<AppManagementService>();
+builder.Services.AddSingleton<IOperationNotifications, TelegramOperationNotifications>();
+builder.Services.AddSingleton<AppOperations>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<AppOperations>());
+builder.Services.AddSingleton<HomelabPanel>();
 builder.Services.AddSingleton<AppsPanel>();
 builder.Services.AddSingleton<CommandRouter>();
 
